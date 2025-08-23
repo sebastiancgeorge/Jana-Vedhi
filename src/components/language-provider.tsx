@@ -1,21 +1,20 @@
 "use client";
 
-import { createContext, useState, useContext, type ReactNode, useCallback, useEffect } from 'react';
-import { translateText } from '@/ai/flows/translate-flow';
+import { createContext, useState, useContext, type ReactNode, useEffect } from 'react';
+import en from '@/locales/en.json';
+import ml from '@/locales/ml.json';
 
 type Language = 'english' | 'malayalam';
 
-// This will hold our translations in memory
-const translationsCache: Record<string, Record<string, string>> = {
-  english: {},
-  malayalam: {},
+const translations = {
+  english: en,
+  malayalam: ml,
 };
 
 interface LanguageContextType {
   language: Language;
   setLanguage: (language: Language) => void;
-  translate: (key: string) => Promise<string>;
-  translations: Record<string, string>;
+  t: (key: string, options?: { [key: string]: any }) => string;
   ready: boolean;
 }
 
@@ -23,7 +22,6 @@ const LanguageContext = createContext<LanguageContextType | undefined>(undefined
 
 export function LanguageProvider({ children }: { children: ReactNode }) {
   const [language, setLanguageState] = useState<Language>('english');
-  const [translations, setTranslations] = useState<Record<string, string>>(translationsCache[language]);
   const [ready, setReady] = useState(false);
 
   useEffect(() => {
@@ -33,43 +31,26 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
 
   const setLanguage = (lang: Language) => {
     setLanguageState(lang);
-    // When language changes, update the translations from our cache.
-    setTranslations(translationsCache[lang] || {});
   };
 
-  const translate = useCallback(async (key: string) => {
-    // English is the default, so the key is the translation.
-    if (language === 'english') {
-      return key;
-    }
+  const t = (key: string, options?: { [key:string]: any }) => {
+    if (!ready) return '';
     
-    // If we already have the translation in our cache, return it.
-    if (translationsCache[language]?.[key]) {
-      return translationsCache[language][key];
+    const langKey = language as keyof typeof translations;
+    let translation = translations[langKey][key as keyof typeof en] || key;
+
+    // Handle placeholder replacements like {{count}}
+    if (options) {
+      Object.keys(options).forEach(optKey => {
+        const regex = new RegExp(`{{${optKey}}}`, 'g');
+        translation = translation.replace(regex, options[optKey]);
+      });
     }
-    
-    // If not, fetch it from the AI.
-    try {
-      const response = await translateText({ text: key, targetLanguage: language });
-      const translation = response.translation;
 
-      // Store the new translation in our cache.
-      if (!translationsCache[language]) {
-        translationsCache[language] = {};
-      }
-      translationsCache[language][key] = translation;
-      
-      // Update the state to trigger a re-render in components using the hook.
-      setTranslations(prev => ({...prev, [key]: translation}));
+    return translation;
+  };
 
-      return translation;
-    } catch (error) {
-      console.error("Translation error:", error);
-      return key; // Fallback to the original key on error.
-    }
-  }, [language]);
-
-  const value = { language, setLanguage, translate, translations: translationsCache[language], ready };
+  const value = { language, setLanguage, t, ready };
 
   return (
     <LanguageContext.Provider value={value}>
