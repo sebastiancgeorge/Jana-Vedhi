@@ -18,6 +18,7 @@ const RTIDraftingChatbotInputSchema = z.object({
     .string()
     .describe('The user input for the current step.'),
   rtiDraft: z.string().optional().describe('The current draft of the RTI request.'),
+  targetLanguage: z.string().describe('The target language for the response (e.g., "Malayalam", "English").'),
 });
 export type RTIDraftingChatbotInput = z.infer<typeof RTIDraftingChatbotInputSchema>;
 
@@ -41,6 +42,8 @@ const prompt = ai.definePrompt({
 
 You will take the user through a multi-step process, asking for the necessary information to complete the RTI request.
 
+Respond in the user's requested language: {{targetLanguage}}.
+
 Here are the steps:
 1.  **Introduction**: Introduce yourself and explain the purpose of the chatbot.
 2.  **Information Authority**: Ask the user to identify the specific Information Authority/department to address the RTI to.
@@ -56,6 +59,8 @@ User input: {{{userInput}}}
 Current RTI draft: {{{rtiDraft}}}
 
 Based on the current step and user input, determine the next step, provide a relevant response, and update the RTI draft if necessary.  Set isDraftComplete to true when the draft is finalized, otherwise false.
+
+When generating the RTI draft, always generate it in English first, and then translate the response and the draft to {{targetLanguage}} if it is not English.
 
 Output in JSON format. nextStep and response are always required. updatedDraft is required only when changes are made. isDraftComplete should reflect the completion status of the draft.
 `,

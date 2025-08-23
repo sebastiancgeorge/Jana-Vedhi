@@ -41,8 +41,8 @@ const translateTextFlow = ai.defineFlow(
     outputSchema: TranslateTextOutputSchema,
   },
   async input => {
-    // Do not translate if the text is a special key or looks like code
-    if (input.text.startsWith('grievance.type.') || /[{}[\]()]/.test(input.text) || input.text.startsWith("across_projects") || !/[a-zA-Z]/.test(input.text) ) {
+    // Do not translate if the text is a special key, short, or looks like code
+    if (input.text.startsWith('grievance.type.') || /[{}[\]()]/.test(input.text) || input.text.startsWith("across_projects") || !/[a-zA-Z]/.test(input.text) || input.text.trim().split(/\s+/).length <= 2) {
         return { translation: input.text };
     }
     const {output} = await prompt(input);

@@ -17,7 +17,6 @@ type Message = {
   text: string;
   sender: "user" | "bot";
   links?: string[];
-  translatedText?: string;
 };
 
 export default function GeneralChatbotPage() {
@@ -26,7 +25,7 @@ export default function GeneralChatbotPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [isListening, setIsListening] = useState(false);
   const scrollAreaRef = useRef<HTMLDivElement>(null);
-  const { t, translateDynamicText, language } = useTranslation();
+  const { t, language } = useTranslation();
   const recognitionRef = useRef<any>(null);
 
 
@@ -57,32 +56,6 @@ export default function GeneralChatbotPage() {
 
 
   useEffect(() => {
-    // Re-translate all bot messages when language changes
-    const reTranslateMessages = async () => {
-        setMessages(prevMessages => {
-            const newMessagesPromises = prevMessages.map(async (msg) => {
-                if (msg.sender === 'bot') {
-                    const translated = await translateDynamicText(msg.text);
-                    return { ...msg, translatedText: translated };
-                }
-                return msg;
-            });
-            Promise.all(newMessagesPromises).then(newMessages => setMessages(newMessages));
-            return prevMessages; // Return original while fetching new translations
-        });
-    };
-
-    if (language === 'malayalam') {
-      reTranslateMessages();
-    } else {
-      // If switching back to english, clear translated text
-      setMessages(prev => prev.map(m => m.sender === 'bot' ? {...m, translatedText: undefined} : m));
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [language]);
-
-
-  useEffect(() => {
     if (scrollAreaRef.current) {
       scrollAreaRef.current.scrollTo({
         top: scrollAreaRef.current.scrollHeight,
@@ -106,24 +79,20 @@ export default function GeneralChatbotPage() {
     setIsLoading(true);
 
     try {
-      const botResponse = await getGeneralChatbotResponse(currentInput);
-      const translatedText = await translateDynamicText(botResponse.answer);
+      const botResponse = await getGeneralChatbotResponse(currentInput, language);
       const botMessage: Message = {
         id: (Date.now() + 1).toString(),
         text: botResponse.answer,
         sender: "bot",
         links: botResponse.relevantLinks,
-        translatedText: translatedText,
       };
       setMessages((prev) => [...prev, botMessage]);
     } catch (error) {
       const errorMessageText = t("chatbot_error");
-      const translatedError = await translateDynamicText(errorMessageText);
       const errorMessage: Message = {
         id: (Date.now() + 1).toString(),
         text: errorMessageText,
         sender: "bot",
-        translatedText: translatedError
       };
       setMessages((prev) => [...prev, errorMessage]);
     } finally {
@@ -149,9 +118,8 @@ export default function GeneralChatbotPage() {
     }
   };
 
-  const renderMessageText = (text: string, translatedText?: string) => {
-    const textToRender = language === 'malayalam' && translatedText ? translatedText : text;
-    const parts = textToRender.split(/(\[.*?\]\(.*?\))/g);
+  const renderMessageText = (text: string) => {
+    const parts = text.split(/(\[.*?\]\(.*?\))/g);
     return parts.map((part, index) => {
       const match = part.match(/\[(.*?)\]\((.*?)\)/);
       if (match) {
@@ -207,13 +175,13 @@ export default function GeneralChatbotPage() {
                         : "bg-muted"
                     }`}
                   >
-                    <div className="text-sm whitespace-pre-wrap">{renderMessageText(message.text, message.translatedText)}</div>
+                    <div className="text-sm whitespace-pre-wrap">{renderMessageText(message.text)}</div>
                      {message.sender === "bot" && (
                         <Button
                             variant="ghost"
                             size="icon"
                             className="absolute -top-2 -right-2 h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity"
-                            onClick={() => handleSpeak(language === 'malayalam' && message.translatedText ? message.translatedText : message.text)}
+                            onClick={() => handleSpeak(message.text)}
                         >
                             <Volume2 className="h-4 w-4" />
                         </Button>

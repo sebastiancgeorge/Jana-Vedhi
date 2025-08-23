@@ -1,5 +1,3 @@
-// Legal Chatbot: Retrieve answers from legal FAQ or LLM; cite sources from legal FAQ.
-
 'use server';
 
 /**
@@ -15,6 +13,7 @@ import {z} from 'genkit';
 
 const AskLegalQuestionInputSchema = z.object({
   question: z.string().describe('The legal question to be answered.'),
+  targetLanguage: z.string().describe('The target language for the response (e.g., "Malayalam", "English").'),
 });
 export type AskLegalQuestionInput = z.infer<typeof AskLegalQuestionInputSchema>;
 
@@ -31,7 +30,7 @@ const prompt = ai.definePrompt({
   name: 'askLegalQuestionPrompt',
   input: {schema: AskLegalQuestionInputSchema},
   output: {schema: AskLegalQuestionOutputSchema},
-  prompt: `You are a legal chatbot that answers legal questions and gives advice. Provide a comprehensive and helpful answer to the user's question.
+  prompt: `You are a legal chatbot that answers legal questions and gives advice. Provide a comprehensive and helpful answer to the user's question. Respond in the user's requested language: {{targetLanguage}}.
 
   Question: {{{question}}}`,
 });

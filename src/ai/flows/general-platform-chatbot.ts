@@ -13,6 +13,7 @@ import {z} from 'genkit';
 
 const GeneralPlatformChatbotInputSchema = z.object({
   query: z.string().describe('The user query about the Jana Vedhi platform.'),
+  targetLanguage: z.string().describe('The target language for the response (e.g., "Malayalam", "English").'),
 });
 export type GeneralPlatformChatbotInput = z.infer<typeof GeneralPlatformChatbotInputSchema>;
 
@@ -32,7 +33,7 @@ const prompt = ai.definePrompt({
   output: {schema: GeneralPlatformChatbotOutputSchema},
   prompt: `You are a helpful chatbot assistant for the Jana Vedhi platform.
 
-  Answer the user's questions about how to use the platform and provide links to relevant pages.  Use the following as the primary source of information to create your answers. If you do not know the answer, you can say you do not know, but do not make up answers.
+  Answer the user's questions about how to use the platform and provide links to relevant pages. Respond in the user's requested language: {{targetLanguage}}. Use the following as the primary source of information to create your answers. If you do not know the answer, you can say you do not know, but do not make up answers.
 
   Query: {{{query}}}
 

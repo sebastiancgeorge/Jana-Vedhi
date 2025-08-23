@@ -16,7 +16,6 @@ type Message = {
   id: string;
   text: string;
   sender: "user" | "bot";
-  translatedText?: string;
 };
 
 export default function LegalChatbotPage() {
@@ -25,7 +24,7 @@ export default function LegalChatbotPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [isListening, setIsListening] = useState(false);
   const scrollAreaRef = useRef<HTMLDivElement>(null);
-  const { t, language, translateDynamicText } = useTranslation();
+  const { t, language } = useTranslation();
   const recognitionRef = useRef<any>(null);
 
   useEffect(() => {
@@ -53,32 +52,6 @@ export default function LegalChatbotPage() {
     }
   }, [language]);
 
-
-  useEffect(() => {
-    // Re-translate all bot messages when language changes
-    const reTranslateMessages = async () => {
-        setMessages(prevMessages => {
-            const newMessagesPromises = prevMessages.map(async (msg) => {
-                if (msg.sender === 'bot') {
-                    const translated = await translateDynamicText(msg.text);
-                    return { ...msg, translatedText: translated };
-                }
-                return msg;
-            });
-            Promise.all(newMessagesPromises).then(newMessages => setMessages(newMessages));
-            return prevMessages; // Return original while fetching new translations
-        });
-    };
-
-    if (language === 'malayalam') {
-      reTranslateMessages();
-    } else {
-      // If switching back to english, clear translated text
-      setMessages(prev => prev.map(m => m.sender === 'bot' ? {...m, translatedText: undefined} : m));
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [language]);
-
   useEffect(() => {
     if (scrollAreaRef.current) {
       scrollAreaRef.current.scrollTo({
@@ -103,23 +76,19 @@ export default function LegalChatbotPage() {
     setIsLoading(true);
 
     try {
-      const botResponse = await getLegalChatbotResponse(currentInput);
-      const translatedText = await translateDynamicText(botResponse.answer);
+      const botResponse = await getLegalChatbotResponse(currentInput, language);
       const botMessage: Message = {
         id: (Date.now() + 1).toString(),
         text: botResponse.answer,
         sender: "bot",
-        translatedText: translatedText,
       };
       setMessages((prev) => [...prev, botMessage]);
     } catch (error) {
        const errorMessageText = t("chatbot_error");
-       const translatedError = await translateDynamicText(errorMessageText);
       const errorMessage: Message = {
         id: (Date.now() + 1).toString(),
         text: errorMessageText,
         sender: "bot",
-        translatedText: translatedError
       };
       setMessages((prev) => [...prev, errorMessage]);
     } finally {
@@ -169,8 +138,6 @@ export default function LegalChatbotPage() {
                 </div>
               )}
               {messages.map((message) => {
-                 const text = language === 'malayalam' && message.translatedText ? message.translatedText : message.text;
-
                 return (
                   <div
                     key={message.id}
@@ -190,14 +157,14 @@ export default function LegalChatbotPage() {
                           : "bg-muted"
                       }`}
                     >
-                      <p className="text-sm whitespace-pre-wrap">{text}</p>
+                      <p className="text-sm whitespace-pre-wrap">{message.text}</p>
                       
                       {message.sender === "bot" && (
                           <Button
                               variant="ghost"
                               size="icon"
                               className="absolute -top-2 -right-2 h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity"
-                              onClick={() => handleSpeak(text)}
+                              onClick={() => handleSpeak(message.text)}
                           >
                               <Volume2 className="h-4 w-4" />
                           </Button>

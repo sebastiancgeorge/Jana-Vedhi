@@ -4,14 +4,15 @@
 import { generalPlatformChatbot, type GeneralPlatformChatbotOutput } from "@/ai/flows/general-platform-chatbot";
 
 export async function getGeneralChatbotResponse(
-  query: string
+  query: string,
+  language: string
 ): Promise<GeneralPlatformChatbotOutput> {
   if (!query || typeof query !== "string" || query.trim() === "") {
     return { answer: "Please provide a valid question.", relevantLinks: [] };
   }
   
   try {
-    const response = await generalPlatformChatbot({ query });
+    const response = await generalPlatformChatbot({ query, targetLanguage: language });
     return response;
   } catch (error) {
     console.error("Error in getGeneralChatbotResponse:", error);

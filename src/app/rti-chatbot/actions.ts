@@ -4,10 +4,11 @@
 import { rtiDraftingChatbot, type RTIDraftingChatbotInput, type RTIDraftingChatbotOutput } from "@/ai/flows/rti-drafting-chatbot";
 
 export async function getRtiChatbotResponse(
-  input: RTIDraftingChatbotInput
+  input: Omit<RTIDraftingChatbotInput, 'targetLanguage'>,
+  language: string
 ): Promise<RTIDraftingChatbotOutput> {
   try {
-    const response = await rtiDraftingChatbot(input);
+    const response = await rtiDraftingChatbot({ ...input, targetLanguage: language });
     return response;
   } catch (error) {
     console.error("Error in getRtiChatbotResponse:", error);
