@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useForm } from "react-hook-form";
@@ -12,8 +13,8 @@ import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/use-auth";
 import { useRouter } from "next/navigation";
 import { type GrievanceInput, submitGrievance } from "./actions";
-import { useState } from "react";
-import { Loader2 } from "lucide-react";
+import { useState, useRef, useEffect } from "react";
+import { Loader2, Mic } from "lucide-react";
 import { useTranslation } from "@/hooks/use-translation";
 import { z } from "zod";
 
@@ -32,7 +33,9 @@ export default function GrievancePage() {
   const { user } = useAuth();
   const router = useRouter();
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const { t } = useTranslation();
+  const [isListening, setIsListening] = useState(false);
+  const { t, language } = useTranslation();
+  const recognitionRef = useRef<any>(null);
 
   const form = useForm<GrievanceInput>({
     resolver: zodResolver(GrievanceSchema),
@@ -43,6 +46,36 @@ export default function GrievancePage() {
       userId: user?.uid || "",
     },
   });
+
+  useEffect(() => {
+    if (typeof window !== 'undefined' && ('SpeechRecognition' in window || 'webkitSpeechRecognition' in window)) {
+        const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+        recognitionRef.current = new SpeechRecognition();
+        recognitionRef.current.continuous = false;
+        recognitionRef.current.lang = language === 'malayalam' ? 'ml-IN' : 'en-US';
+
+        recognitionRef.current.onresult = (event: any) => {
+            const transcript = event.results[0][0].transcript;
+            form.setValue("description", form.getValues("description") + transcript);
+            setIsListening(false);
+        };
+
+        recognitionRef.current.onerror = (event: any) => {
+            console.error("Speech recognition error", event.error);
+            toast({
+                variant: 'destructive',
+                title: 'Speech Recognition Error',
+                description: event.error === 'not-allowed' ? 'Permission to use microphone was denied.' : 'An error occurred during speech recognition.',
+            });
+            setIsListening(false);
+        };
+        
+        recognitionRef.current.onend = () => {
+            setIsListening(false);
+        };
+    }
+  }, [language, form, toast]);
+
 
   if (!user) {
     router.push("/login");
@@ -71,6 +104,15 @@ export default function GrievancePage() {
     } finally {
       setIsSubmitting(false);
     }
+  };
+
+  const toggleListen = () => {
+    if (isListening) {
+      recognitionRef.current?.stop();
+    } else {
+      recognitionRef.current?.start();
+    }
+    setIsListening(!isListening);
   };
 
   return (
@@ -127,11 +169,24 @@ export default function GrievancePage() {
                   <FormItem>
                     <FormLabel>{t("description")}</FormLabel>
                     <FormControl>
-                      <Textarea
-                        placeholder={t("description_placeholder")}
-                        className="resize-none"
-                        {...field}
-                      />
+                      <div className="relative">
+                        <Textarea
+                          placeholder={t("description_placeholder")}
+                          className="resize-none pr-10"
+                          {...field}
+                        />
+                        <Button
+                          type="button"
+                          size="icon"
+                          variant={isListening ? "destructive" : "ghost"}
+                          className="absolute right-2 top-1/2 -translate-y-1/2 h-7 w-7"
+                          onClick={toggleListen}
+                          disabled={!recognitionRef.current}
+                        >
+                          <Mic className="h-4 w-4" />
+                          <span className="sr-only">Speak</span>
+                        </Button>
+                      </div>
                     </FormControl>
                     <FormMessage />
                   </FormItem>

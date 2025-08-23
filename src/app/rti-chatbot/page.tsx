@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Bot, FileText, Send, User, Download, Save } from "lucide-react";
+import { Bot, FileText, Send, User, Download, Save, Mic, Volume2 } from "lucide-react";
 import { useTranslation } from "@/hooks/use-translation";
 import { Textarea } from "@/components/ui/textarea";
 import { jsPDF } from "jspdf";
@@ -31,6 +31,7 @@ export default function RtiChatbotPage() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [isListening, setIsListening] = useState(false);
   const [chatState, setChatState] = useState<ChatState>({
     currentStep: "Introduction",
     rtiDraft: "",
@@ -38,6 +39,31 @@ export default function RtiChatbotPage() {
   });
   const scrollAreaRef = useRef<HTMLDivElement>(null);
   const { t, language, translateDynamicText } = useTranslation();
+  const recognitionRef = useRef<any>(null);
+
+
+  useEffect(() => {
+    // SpeechRecognition setup
+    if (typeof window !== 'undefined' && ('SpeechRecognition' in window || 'webkitSpeechRecognition' in window)) {
+      const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+      recognitionRef.current = new SpeechRecognition();
+      recognitionRef.current.continuous = false;
+      recognitionRef.current.lang = language === 'malayalam' ? 'ml-IN' : 'en-US';
+      recognitionRef.current.onresult = (event: any) => {
+        const transcript = event.results[0][0].transcript;
+        setInput(transcript);
+        setIsListening(false);
+      };
+      recognitionRef.current.onerror = (event: any) => {
+        console.error("Speech recognition error", event.error);
+        setIsListening(false);
+      };
+      recognitionRef.current.onend = () => {
+        setIsListening(false);
+      };
+    }
+  }, [language]);
+
 
   const translateMessages = useCallback(async (msgs: Message[]) => {
     const promises = msgs.map(async (msg) => {
@@ -158,6 +184,23 @@ export default function RtiChatbotPage() {
     }
   };
 
+  const handleSpeak = (text: string) => {
+    if (typeof window !== 'undefined' && window.speechSynthesis) {
+        const utterance = new SpeechSynthesisUtterance(text);
+        utterance.lang = language === 'malayalam' ? 'ml-IN' : 'en-US';
+        speechSynthesis.speak(utterance);
+    }
+  };
+
+  const toggleListen = () => {
+    if (isListening) {
+      recognitionRef.current?.stop();
+    } else {
+      recognitionRef.current?.start();
+    }
+    setIsListening(!isListening);
+  };
+
   return (
     <div className="flex flex-col md:flex-row gap-6 h-[calc(100vh-8rem)]">
       <Card className="flex flex-col flex-1">
@@ -186,13 +229,23 @@ export default function RtiChatbotPage() {
                     </Avatar>
                   )}
                   <div
-                    className={`max-w-md rounded-lg p-3 ${
+                    className={`max-w-md rounded-lg p-3 relative group ${
                       message.sender === "user"
                         ? "bg-primary text-primary-foreground"
                         : "bg-muted"
                     }`}
                   >
                     <p className="text-sm whitespace-pre-wrap">{language === 'malayalam' && message.translatedText ? message.translatedText : message.text}</p>
+                     {message.sender === "bot" && (
+                        <Button
+                            variant="ghost"
+                            size="icon"
+                            className="absolute -top-2 -right-2 h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity"
+                            onClick={() => handleSpeak(language === 'malayalam' && message.translatedText ? message.translatedText : message.text)}
+                        >
+                            <Volume2 className="h-4 w-4" />
+                        </Button>
+                    )}
                   </div>
                   {message.sender === "user" && (
                      <Avatar className="h-9 w-9 border">
@@ -227,6 +280,10 @@ export default function RtiChatbotPage() {
               disabled={isLoading || chatState.isDraftComplete}
               autoComplete="off"
             />
+             <Button type="button" size="icon" variant={isListening ? "destructive" : "outline"} onClick={toggleListen} disabled={!recognitionRef.current}>
+                <Mic className="h-4 w-4" />
+                <span className="sr-only">Speak</span>
+            </Button>
             <Button type="submit" disabled={isLoading || !input.trim() || chatState.isDraftComplete}>
               <Send className="h-4 w-4" />
               <span className="sr-only">{t("send")}</span>
