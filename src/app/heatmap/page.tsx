@@ -1,12 +1,23 @@
+
 "use client";
 
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
 import { useTranslation } from "@/hooks/use-translation";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { getGrievanceLocations, type GrievanceLocation } from "./actions";
 import { Loader2 } from "lucide-react";
-import { KeralaMap } from "@/components/kerala-map";
 import { useToast } from "@/hooks/use-toast";
+import dynamic from "next/dynamic";
+
+const KeralaMap = dynamic(() => import("@/components/kerala-map").then(mod => mod.KeralaMap), {
+  ssr: false,
+  loading: () => (
+    <div className="flex h-[500px] w-full items-center justify-center">
+      <Loader2 className="h-8 w-8 animate-spin" />
+    </div>
+  ),
+});
+
 
 export default function HeatmapPage() {
   const { t } = useTranslation();
@@ -42,9 +53,9 @@ export default function HeatmapPage() {
           <CardTitle>{t("kerala_grievance_map")}</CardTitle>
           <CardDescription>{t("kerala_grievance_map_desc")}</CardDescription>
         </CardHeader>
-        <CardContent className="flex items-center justify-center">
+        <CardContent className="h-[600px] w-full">
           {loading ? (
-            <div className="flex h-[500px] w-full items-center justify-center">
+            <div className="flex h-full w-full items-center justify-center">
               <Loader2 className="h-8 w-8 animate-spin" />
             </div>
           ) : (
@@ -55,4 +66,3 @@ export default function HeatmapPage() {
     </div>
   );
 }
-

@@ -1,9 +1,11 @@
+
 "use client";
 
 import { MapContainer, TileLayer, Marker, Tooltip } from "react-leaflet";
 import type { LatLngExpression } from "leaflet";
 import L from "leaflet";
 import type { GrievanceLocation } from "@/app/heatmap/actions";
+import React from 'react';
 
 interface KeralaMapProps {
   points: GrievanceLocation[];
@@ -20,12 +22,12 @@ const customIcon = new L.Icon({
     shadowSize: [41, 41]
 });
 
-export function KeralaMap({ points }: KeralaMapProps) {
+export const KeralaMap = React.forwardRef<HTMLDivElement, KeralaMapProps>(({ points }, ref) => {
   // Center of Kerala
   const position: LatLngExpression = [10.8505, 76.2711];
 
   return (
-    <div className="relative h-[600px] w-full rounded-md border overflow-hidden">
+    <div ref={ref} className="relative h-full w-full rounded-md border overflow-hidden">
         <MapContainer center={position} zoom={7} scrollWheelZoom={false} className="h-full w-full">
             <TileLayer
                 attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
@@ -45,4 +47,6 @@ export function KeralaMap({ points }: KeralaMapProps) {
         </MapContainer>
     </div>
   );
-}
+});
+
+KeralaMap.displayName = "KeralaMap";
