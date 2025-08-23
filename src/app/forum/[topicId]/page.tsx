@@ -16,13 +16,15 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Form, FormControl, FormField, FormItem, FormMessage } from "@/components/ui/form";
 import { Textarea } from "@/components/ui/textarea";
+import { useParams } from "next/navigation";
 
 const ReplySchema = z.object({
   content: z.string().min(1, "Reply cannot be empty."),
 });
 
-export default function TopicPage({ params }: { params: { topicId: string } }) {
-  const { topicId } = params;
+export default function TopicPage() {
+  const params = useParams();
+  const topicId = params.topicId as string;
   const [topic, setTopic] = useState<Topic | null>(null);
   const [replies, setReplies] = useState<Reply[]>([]);
   const [loading, setLoading] = useState(true);
@@ -56,7 +58,9 @@ export default function TopicPage({ params }: { params: { topicId: string } }) {
     };
 
   useEffect(() => {
-    fetchTopicAndReplies();
+    if (topicId) {
+        fetchTopicAndReplies();
+    }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [topicId, toast]);
 
