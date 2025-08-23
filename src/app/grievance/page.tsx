@@ -65,20 +65,18 @@ export default function GrievancePage() {
   useEffect(() => {
     if (typeof window !== 'undefined' && ('SpeechRecognition' in window || 'webkitSpeechRecognition' in window)) {
         const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-        recognitionRef.current = new SpeechRecognition();
-        recognitionRef.current.continuous = true;
-        recognitionRef.current.interimResults = true;
-        recognitionRef.current.lang = language === 'malayalam' ? 'ml-IN' : 'en-US';
+        const recognition = new SpeechRecognition();
+        recognition.continuous = false;
+        recognition.interimResults = false;
+        recognition.lang = language === 'malayalam' ? 'ml-IN' : 'en-US';
 
-        recognitionRef.current.onresult = (event: any) => {
-            const transcript = Array.from(event.results)
-                .map((result: any) => result[0])
-                .map((result) => result.transcript)
-                .join('');
-            form.setValue("description", transcript);
+        recognition.onresult = (event: any) => {
+            const transcript = event.results[0][0].transcript;
+            form.setValue("description", form.getValues("description") ? `${form.getValues("description")} ${transcript}` : transcript);
+            setIsListening(false);
         };
 
-        recognitionRef.current.onerror = (event: any) => {
+        recognition.onerror = (event: any) => {
             console.error("Speech recognition error", event.error);
             toast({
                 variant: 'destructive',
@@ -88,9 +86,10 @@ export default function GrievancePage() {
             setIsListening(false);
         };
         
-        recognitionRef.current.onend = () => {
+        recognition.onend = () => {
             setIsListening(false);
         };
+        recognitionRef.current = recognition;
     }
   }, [language, form, toast]);
 
@@ -131,7 +130,7 @@ export default function GrievancePage() {
   }
   
   if (!user) {
-    return null; // The redirect is handled in useEffect
+    return null; 
   }
 
   return (
