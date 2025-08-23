@@ -37,11 +37,11 @@ export function KeralaMap({ points }: KeralaMapProps) {
     <div className="relative" style={{ width: MAP_WIDTH, height: MAP_HEIGHT }}>
       <TooltipProvider>
         <Image
-          src="https://placehold.co/500x800.png"
+          src="https://images.unsplash.com/photo-1602216056096-3b40cc0c9944?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxfHxrZXJhbGF8ZW58MHx8fHwxNzU1OTY0NDg1fDA&ixlib=rb-4.1.0&q=80&w=1080"
           alt="Map of Kerala"
           width={MAP_WIDTH}
           height={MAP_HEIGHT}
-          className="absolute inset-0 w-full h-full"
+          className="absolute inset-0 w-full h-full object-cover"
           data-ai-hint="kerala map"
         />
         <svg
