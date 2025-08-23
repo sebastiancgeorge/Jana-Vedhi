@@ -2,13 +2,13 @@
 "use client";
 
 import { useState, useRef, useEffect, type FormEvent, useCallback } from "react";
-import { getLegalChatbotResponse } from "./actions";
+import { getLegalChatbotResponse, getSpokenAudio } from "./actions";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Bot, Gavel, Send, User, Files, Mic, Volume2 } from "lucide-react";
+import { Bot, Gavel, Send, User, Files, Mic, Volume2, Loader2 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { useTranslation } from "@/hooks/use-translation";
 
@@ -18,12 +18,21 @@ type Message = {
   sender: "user" | "bot";
 };
 
+type AudioState = {
+  [messageId: string]: {
+    isLoading: boolean;
+    audioUrl?: string;
+  };
+};
+
 export default function LegalChatbotPage() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [isListening, setIsListening] = useState(false);
+  const [audioState, setAudioState] = useState<AudioState>({});
   const scrollAreaRef = useRef<HTMLDivElement>(null);
+  const audioRef = useRef<HTMLAudioElement>(null);
   const { t, language } = useTranslation();
   const recognitionRef = useRef<any>(null);
 
@@ -96,11 +105,32 @@ export default function LegalChatbotPage() {
     }
   };
 
-  const handleSpeak = (text: string) => {
-    if (typeof window !== 'undefined' && window.speechSynthesis) {
-        const utterance = new SpeechSynthesisUtterance(text);
-        utterance.lang = language === 'malayalam' ? 'ml-IN' : 'en-US';
-        speechSynthesis.speak(utterance);
+  const handleSpeak = async (messageId: string, text: string) => {
+    if (audioRef.current && !audioRef.current.paused) {
+      audioRef.current.pause();
+      audioRef.current.currentTime = 0;
+      return;
+    }
+    
+    if (audioState[messageId]?.audioUrl) {
+      if(audioRef.current) {
+        audioRef.current.src = audioState[messageId].audioUrl!;
+        audioRef.current.play();
+      }
+      return;
+    }
+
+    setAudioState(prev => ({ ...prev, [messageId]: { isLoading: true } }));
+    try {
+      const response = await getSpokenAudio(text);
+      setAudioState(prev => ({ ...prev, [messageId]: { isLoading: false, audioUrl: response.audio } }));
+      if (audioRef.current) {
+        audioRef.current.src = response.audio;
+        audioRef.current.play();
+      }
+    } catch (error) {
+       setAudioState(prev => ({ ...prev, [messageId]: { isLoading: false } }));
+       console.error("Failed to play audio", error);
     }
   };
 
@@ -138,6 +168,7 @@ export default function LegalChatbotPage() {
                 </div>
               )}
               {messages.map((message) => {
+                const isAudioLoading = audioState[message.id]?.isLoading;
                 return (
                   <div
                     key={message.id}
@@ -164,9 +195,10 @@ export default function LegalChatbotPage() {
                               variant="ghost"
                               size="icon"
                               className="absolute -top-2 -right-2 h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity"
-                              onClick={() => handleSpeak(message.text)}
+                              onClick={() => handleSpeak(message.id, message.text)}
+                              disabled={isAudioLoading}
                           >
-                              <Volume2 className="h-4 w-4" />
+                            {isAudioLoading ? <Loader2 className="h-4 w-4 animate-spin"/> : <Volume2 className="h-4 w-4" />}
                           </Button>
                       )}
                     </div>
@@ -215,6 +247,7 @@ export default function LegalChatbotPage() {
           </form>
         </CardFooter>
       </Card>
+      <audio ref={audioRef} className="hidden" />
     </div>
   );
 }
