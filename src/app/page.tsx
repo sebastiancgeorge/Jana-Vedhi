@@ -51,7 +51,7 @@ export default function Home() {
         const [activeSnapshot, lastMonthSnapshot, allGrievancesSnapshot] = await Promise.all([
             getDocs(activeGrievancesQuery), 
             getDocs(lastMonthGrievancesQuery),
-            getDocs(allGrievancesSnapshot)
+            getDocs(allGrievancesQuery)
         ]);
 
         // Grievance chart data aggregation
@@ -240,5 +240,3 @@ export default function Home() {
     </div>
   );
 }
-
-    
