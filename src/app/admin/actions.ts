@@ -104,7 +104,8 @@ export async function addFund(fund: FundInput) {
         return { success: true };
     } catch (error) {
         console.error("Error adding fund:", error);
-        throw new Error("Failed to add fund.");
+        const errorMessage = error instanceof Error ? error.message : "An unknown error occurred.";
+        throw new Error(`Failed to add fund: ${errorMessage}`);
     }
 }
 
@@ -116,7 +117,8 @@ export async function updateFund(id: string, fund: Partial<FundInput>) {
         return { success: true };
     } catch (error) {
         console.error("Error updating fund:", error);
-        throw new Error("Failed to update fund.");
+        const errorMessage = error instanceof Error ? error.message : "An unknown error occurred.";
+        throw new Error(`Failed to update fund: ${errorMessage}`);
     }
 }
 
@@ -127,7 +129,8 @@ export async function deleteFund(id: string) {
         return { success: true };
     } catch (error) {
         console.error("Error deleting fund:", error);
-        throw new Error("Failed to delete fund.");
+        const errorMessage = error instanceof Error ? error.message : "An unknown error occurred.";
+        throw new Error(`Failed to delete fund: ${errorMessage}`);
     }
 }
 
@@ -160,7 +163,8 @@ export async function addBudget(budget: BudgetInput) {
         return { success: true };
     } catch (error) {
         console.error("Error adding budget:", error);
-        throw new Error("Failed to add budget.");
+        const errorMessage = error instanceof Error ? error.message : "An unknown error occurred.";
+        throw new Error(`Failed to add budget: ${errorMessage}`);
     }
 }
 
@@ -172,7 +176,8 @@ export async function updateBudget(id: string, budget: Partial<BudgetInput>) {
         return { success: true };
     } catch (error) {
         console.error("Error updating budget:", error);
-        throw new Error("Failed to update budget.");
+        const errorMessage = error instanceof Error ? error.message : "An unknown error occurred.";
+        throw new Error(`Failed to update budget: ${errorMessage}`);
     }
 }
 
