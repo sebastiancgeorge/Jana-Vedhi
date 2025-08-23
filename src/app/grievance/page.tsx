@@ -30,7 +30,7 @@ const GrievanceSchema = z.object({
 
 export default function GrievancePage() {
   const { toast } = useToast();
-  const { user } = useAuth();
+  const { user, loading: authLoading } = useAuth();
   const router = useRouter();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isListening, setIsListening] = useState(false);
@@ -46,6 +46,18 @@ export default function GrievancePage() {
       userId: user?.uid || "",
     },
   });
+  
+  useEffect(() => {
+    if (!authLoading && !user) {
+      router.push("/login");
+    }
+  }, [user, authLoading, router]);
+
+  useEffect(() => {
+    if (user) {
+      form.setValue("userId", user.uid);
+    }
+  }, [user, form]);
 
   useEffect(() => {
     if (typeof window !== 'undefined' && ('SpeechRecognition' in window || 'webkitSpeechRecognition' in window)) {
@@ -77,14 +89,6 @@ export default function GrievancePage() {
   }, [language, form, toast]);
 
 
-  if (!user) {
-    router.push("/login");
-    return null;
-  }
-  
-  // Keep userId in form sync with auth state
-  form.setValue("userId", user.uid);
-
   const onSubmit = async (data: GrievanceInput) => {
     setIsSubmitting(true);
     try {
@@ -114,6 +118,10 @@ export default function GrievancePage() {
     }
     setIsListening(!isListening);
   };
+  
+  if (authLoading || !user) {
+    return <div className="flex h-screen items-center justify-center"><Loader2 className="h-8 w-8 animate-spin" /></div>;
+  }
 
   return (
     <div>
