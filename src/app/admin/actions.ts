@@ -183,6 +183,7 @@ export async function deleteBudget(id: string) {
         return { success: true };
     } catch (error) {
         console.error("Error deleting budget:", error);
-        throw new Error("Failed to delete budget.");
+        const errorMessage = error instanceof Error ? error.message : "An unknown error occurred.";
+        throw new Error(`Failed to delete budget: ${errorMessage}`);
     }
 }
