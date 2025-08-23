@@ -2,55 +2,45 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useLanguage } from '@/components/language-provider';
 
-// A cache to store translations to avoid re-fetching for the same key.
-const translationCache = new Map<string, string>();
-
 export function useTranslation() {
   const { language, translate, translations, ready } = useLanguage();
-  const [, setForceRender] = useState(0);
+  // This state is used to force a re-render when translations are updated.
+  const [localTranslations, setLocalTranslations] = useState(translations);
 
-  // When language changes, we need to force a re-render of components using the hook
   useEffect(() => {
-    setForceRender(c => c + 1);
-  }, [language, translations]);
-
+    // When the global translations change (after a fetch), update the local state.
+    setLocalTranslations(translations);
+  }, [translations]);
+  
   const t = useCallback((key: string, options?: { [key: string]: any }) => {
-    if (!key) return '';
+    if (!key || !ready) return '';
 
-    const cacheKey = `${language}:${key}`;
-    
-    // If we are in english, just return the key.
+    let translatedText;
+
     if (language === 'english') {
-      let result = key;
-       if (options) {
-        Object.keys(options).forEach(optKey => {
-          if(optKey === 'count') return;
-          const regex = new RegExp(`{{${optKey}}}`, 'g');
-          result = result.replace(regex, options[optKey]);
-        });
+      translatedText = key;
+    } else {
+      // Get translation from the local state (which is a copy of the global cache)
+      translatedText = localTranslations[key] || key; // Fallback to key if not translated yet
+      
+      // If the translation isn't in the cache, trigger the fetch.
+      // The component will re-render once the translation is available.
+      if (!localTranslations[key]) {
+        translate(key);
       }
-      return result;
+    }
+    
+    // Handle placeholder replacements like {{count}}
+    if (options) {
+      Object.keys(options).forEach(optKey => {
+        const regex = new RegExp(`{{${optKey}}}`, 'g');
+        translatedText = translatedText.replace(regex, options[optKey]);
+      });
     }
 
-    // Check if the translation is already in the provider's state
-    if (translations[key]) {
-       let result = translations[key];
-       if (options) {
-        Object.keys(options).forEach(optKey => {
-          if(optKey === 'count') return;
-          const regex = new RegExp(`{{${optKey}}}`, 'g');
-          result = result.replace(regex, options[optKey]);
-        });
-      }
-      return result;
-    }
+    return translatedText;
 
-    // If not, trigger translation but return the key for now.
-    // The component will re-render once the translation is fetched and stored.
-    translate(key);
-    return key; // Return key as fallback
-
-  }, [language, translate, translations]);
+  }, [language, translate, localTranslations, ready]);
 
   return { t, ready, language };
 }
