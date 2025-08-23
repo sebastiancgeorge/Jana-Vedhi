@@ -91,11 +91,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const userCredential = await createUserWithEmailAndPassword(auth, email, pass);
       const newUser = userCredential.user;
 
+      const role: UserRole = email === 'admin@example.gov' ? 'admin' : 'citizen';
+
       // Create a document in Firestore 'users' collection
       await setDoc(doc(db, "users", newUser.uid), {
         email: newUser.email,
         aadhaar: aadhaar,
-        role: 'citizen',
+        role: role,
         aadhaarVerified: true,
         createdAt: new Date(),
       });
