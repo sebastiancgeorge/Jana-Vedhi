@@ -3,13 +3,13 @@
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Banknote, FilePenLine, Gavel, Vote, Loader2, BarChart, PieChart } from "lucide-react";
+import { Banknote, FilePenLine, Gavel, Vote, Loader2, BarChart } from "lucide-react";
 import Link from "next/link";
 import { useTranslation } from "@/hooks/use-translation";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { db } from "@/lib/firebase";
 import { collection, getDocs, query, where, Timestamp } from "firebase/firestore";
-import { Bar, CartesianGrid, XAxis, YAxis, BarChart as RechartsBarChart } from "recharts";
+import { Bar, CartesianGrid, XAxis, YAxis, BarChart as RechartsBarChart, Pie, PieChart as RechartsPieChart, Cell } from "recharts";
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart";
 
 interface DashboardStats {
@@ -24,13 +24,24 @@ interface DashboardStats {
 interface GrievanceChartData {
   type: string;
   count: number;
+  fill: string;
+}
+
+interface BudgetChartData {
+    status: string;
+    count: number;
+    fill: string;
 }
 
 export default function Home() {
   const { t } = useTranslation();
   const [stats, setStats] = useState<DashboardStats | null>(null);
   const [grievanceData, setGrievanceData] = useState<GrievanceChartData[]>([]);
+  const [budgetData, setBudgetData] = useState<BudgetChartData[]>([]);
   const [loading, setLoading] = useState(true);
+
+  const GRIEVANCE_COLORS = ["hsl(var(--chart-1))", "hsl(var(--chart-2))", "hsl(var(--chart-3))", "hsl(var(--chart-4))", "hsl(var(--chart-5))"];
+  const BUDGET_COLORS = ["hsl(var(--chart-1))", "hsl(var(--chart-2))"];
 
   useEffect(() => {
     async function fetchStats() {
@@ -60,9 +71,10 @@ export default function Home() {
             const type = doc.data().type || 'Other';
             grievancesByType[type] = (grievancesByType[type] || 0) + 1;
         });
-        const grievanceChartData = Object.keys(grievancesByType).map(type => ({
+        const grievanceChartData = Object.keys(grievancesByType).map((type, index) => ({
             type: t(type),
             count: grievancesByType[type],
+            fill: GRIEVANCE_COLORS[index % GRIEVANCE_COLORS.length]
         }));
         setGrievanceData(grievanceChartData);
 
@@ -73,6 +85,20 @@ export default function Home() {
         const totalUtilized = fundsData.reduce((acc, fund) => acc + (fund.utilized || 0), 0);
 
         // Budgets
+        const allBudgetsSnapshot = await getDocs(budgetsRef);
+        const budgetsByStatus: {[key: string]: number} = {};
+         allBudgetsSnapshot.forEach(doc => {
+            const status = doc.data().status || 'closed';
+            budgetsByStatus[status] = (budgetsByStatus[status] || 0) + 1;
+        });
+        const budgetChartData = Object.keys(budgetsByStatus).map((status, index) => ({
+            status: t(status),
+            count: budgetsByStatus[status],
+            fill: BUDGET_COLORS[index % BUDGET_COLORS.length]
+        }));
+        setBudgetData(budgetChartData);
+
+
         const ongoingVotesQuery = query(budgetsRef, where("status", "==", "open"));
         const ongoingVotesSnapshot = await getDocs(ongoingVotesQuery);
 
@@ -203,7 +229,6 @@ export default function Home() {
                 <ChartContainer config={{
                     count: {
                         label: "Count",
-                        color: "hsl(var(--chart-1))"
                     },
                 }} className="h-[300px] w-full">
                     <RechartsBarChart data={grievanceData} layout="vertical" margin={{ top: 20, right: 20, bottom: 5, left: 0 }}>
@@ -211,7 +236,11 @@ export default function Home() {
                         <YAxis dataKey="type" type="category" tickLine={false} tickMargin={10} axisLine={false} />
                         <XAxis type="number" />
                         <ChartTooltip content={<ChartTooltipContent />} />
-                        <Bar dataKey="count" fill="var(--color-count)" radius={4} />
+                        <Bar dataKey="count" radius={4}>
+                            {grievanceData.map((entry) => (
+                                <Cell key={`cell-${entry.type}`} fill={entry.fill} />
+                            ))}
+                        </Bar>
                     </RechartsBarChart>
                 </ChartContainer>
             </CardContent>
@@ -220,11 +249,24 @@ export default function Home() {
        <div className="grid gap-6 md:grid-cols-2">
          <Card>
             <CardHeader>
-                <CardTitle>Coming Soon</CardTitle>
-                <CardDescription>More visualizations will be added here.</CardDescription>
+                <CardTitle>Budget Status</CardTitle>
+                <CardDescription>Breakdown of open and closed budget proposals.</CardDescription>
             </CardHeader>
             <CardContent className="flex items-center justify-center h-[250px] text-muted-foreground">
-                <BarChart className="h-16 w-16" />
+                <ChartContainer config={{
+                    count: {
+                      label: "Count",
+                    },
+                }} className="h-full w-full">
+                <RechartsPieChart>
+                    <ChartTooltip content={<ChartTooltipContent nameKey="status" />} />
+                    <Pie data={budgetData} dataKey="count" nameKey="status" innerRadius={50}>
+                         {budgetData.map((entry) => (
+                            <Cell key={`cell-${entry.status}`} fill={entry.fill} />
+                        ))}
+                    </Pie>
+                </RechartsPieChart>
+                </ChartContainer>
             </CardContent>
          </Card>
          <Card>
@@ -233,7 +275,7 @@ export default function Home() {
                 <CardDescription>More visualizations will be added here.</CardDescription>
             </CardHeader>
             <CardContent className="flex items-center justify-center h-[250px] text-muted-foreground">
-                <PieChart className="h-16 w-16" />
+                <BarChart className="h-16 w-16" />
             </CardContent>
          </Card>
        </div>

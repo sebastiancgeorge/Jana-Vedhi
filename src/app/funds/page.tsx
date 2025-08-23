@@ -11,7 +11,7 @@ import { Button } from "@/components/ui/button";
 import { ArrowUpDown, Loader2 } from "lucide-react";
 import { useTranslation } from "@/hooks/use-translation";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Bar, CartesianGrid, XAxis, YAxis, Legend, BarChart as RechartsBarChart } from "recharts";
+import { Bar, CartesianGrid, XAxis, YAxis, Legend, BarChart as RechartsBarChart, PieChart as RechartsPieChart, Pie, Cell } from "recharts";
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart";
 
 interface Fund {
@@ -22,12 +22,20 @@ interface Fund {
   utilized: number;
 }
 
+interface PieChartData {
+    name: string;
+    value: number;
+    fill: string;
+}
+
 export default function FundsPage() {
   const [funds, setFunds] = useState<Fund[]>([]);
   const [loading, setLoading] = useState(true);
   const [sorting, setSorting] = useState<SortingState>([]);
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
   const { t, ready } = useTranslation();
+  const PIE_COLORS = ["hsl(var(--chart-1))", "hsl(var(--chart-2))", "hsl(var(--chart-3))", "hsl(var(--chart-4))", "hsl(var(--chart-5))"];
+
 
   useEffect(() => {
     const fetchFunds = async () => {
@@ -50,7 +58,7 @@ export default function FundsPage() {
     return [...new Set(allDepartments)];
   }, [funds]);
   
-  const chartData = useMemo(() => {
+  const barChartData = useMemo(() => {
     const dataByDept: { [key: string]: { allocated: number; utilized: number } } = {};
     funds.forEach(fund => {
         if (!dataByDept[fund.department]) {
@@ -65,6 +73,21 @@ export default function FundsPage() {
         utilized: dataByDept[dept].utilized
     }));
   }, [funds, t]);
+  
+  const pieChartData: PieChartData[] = useMemo(() => {
+    const dataByDept: { [key: string]: number } = {};
+    funds.forEach(fund => {
+        if (!dataByDept[fund.department]) {
+            dataByDept[fund.department] = 0;
+        }
+        dataByDept[fund.department] += fund.allocated;
+    });
+     return Object.keys(dataByDept).map((dept, index) => ({
+        name: t(dept),
+        value: dataByDept[dept],
+        fill: PIE_COLORS[index % PIE_COLORS.length]
+    }));
+  }, [funds, t, PIE_COLORS]);
 
 
   const columns: ColumnDef<Fund>[] = useMemo(() => [
@@ -139,7 +162,7 @@ export default function FundsPage() {
         <p className="text-muted-foreground">{t("funds_overview_desc")}</p>
       </header>
        <div className="grid gap-6 md:grid-cols-2">
-         <Card className="md:col-span-2">
+         <Card>
           <CardHeader>
               <CardTitle>Fund Utilization by Department</CardTitle>
               <CardDescription>Comparison of allocated vs. utilized funds.</CardDescription>
@@ -149,7 +172,7 @@ export default function FundsPage() {
                   allocated: { label: t('allocated_funds'), color: "hsl(var(--chart-2))" },
                   utilized: { label: t('utilized_funds'), color: "hsl(var(--chart-1))" },
               }} className="h-[300px] w-full">
-                  <RechartsBarChart data={chartData} margin={{ top: 20, right: 20, bottom: 5, left: 0 }}>
+                  <RechartsBarChart data={barChartData} margin={{ top: 20, right: 20, bottom: 5, left: 0 }}>
                       <CartesianGrid vertical={false} />
                       <XAxis dataKey="department" tickLine={false} tickMargin={10} axisLine={false} angle={-45} textAnchor="end" height={80} />
                       <YAxis tickFormatter={(value) => `₹${Number(value) / 100000}L`} />
@@ -160,6 +183,25 @@ export default function FundsPage() {
                   </RechartsBarChart>
               </ChartContainer>
           </CardContent>
+        </Card>
+        <Card>
+            <CardHeader>
+                <CardTitle>Fund Distribution by Department</CardTitle>
+                <CardDescription>Proportion of total funds allocated to each department.</CardDescription>
+            </CardHeader>
+            <CardContent className="flex items-center justify-center">
+                <ChartContainer config={{}} className="h-[300px] w-full">
+                    <RechartsPieChart>
+                         <ChartTooltip content={<ChartTooltipContent />} />
+                         <Legend />
+                        <Pie data={pieChartData} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={100}>
+                            {pieChartData.map((entry, index) => (
+                                <Cell key={`cell-${index}`} fill={entry.fill} />
+                            ))}
+                        </Pie>
+                    </RechartsPieChart>
+                </ChartContainer>
+            </CardContent>
         </Card>
        </div>
       <Card>
@@ -243,5 +285,3 @@ export default function FundsPage() {
     </div>
   );
 }
-
-    
