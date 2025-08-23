@@ -4,8 +4,11 @@ import { useContext } from "react";
 import { AuthContext } from "@/components/auth-provider";
 import { type User } from "firebase/auth";
 
+type UserRole = 'citizen' | 'admin';
+
 interface AuthHook {
   user: User | null;
+  userRole: UserRole | null;
   loading: boolean;
   signInWithEmail: (email: string, pass: string) => Promise<void>;
   signUpWithEmail: (email: string, pass: string, aadhaar: string) => Promise<void>;

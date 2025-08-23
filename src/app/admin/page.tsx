@@ -4,12 +4,35 @@ import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/com
 import { Button } from "@/components/ui/button";
 import { seedDatabase } from "./actions";
 import { useToast } from "@/hooks/use-toast";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Loader2 } from "lucide-react";
+import { useAuth } from "@/hooks/use-auth";
+import { useRouter } from "next/navigation";
 
 export default function AdminPage() {
   const { toast } = useToast();
   const [isSeeding, setIsSeeding] = useState(false);
+  const { user, userRole, loading } = useAuth();
+  const router = useRouter();
+
+  useEffect(() => {
+    if (!loading && userRole && userRole !== 'admin') {
+      toast({
+        variant: "destructive",
+        title: "Access Denied",
+        description: "You do not have permission to view this page.",
+      });
+      router.push("/");
+    }
+  }, [user, userRole, loading, router, toast]);
+
+  if (loading || !userRole) {
+    return <div className="flex h-screen items-center justify-center"><Loader2 className="h-8 w-8 animate-spin" /></div>;
+  }
+
+  if (userRole !== 'admin') {
+    return null; // Or a dedicated "Access Denied" component
+  }
 
   const handleSeed = async () => {
     setIsSeeding(true);

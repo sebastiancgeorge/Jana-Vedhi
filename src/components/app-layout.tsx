@@ -142,7 +142,7 @@ export function AppLayout({ children }: { children: ReactNode }) {
 }
 
 function UserMenu() {
-  const { user, signOut: logOut } = useAuth();
+  const { user, userRole, signOut: logOut } = useAuth();
 
   if (!user) {
     return (
@@ -190,12 +190,14 @@ function UserMenu() {
             <span>Profile</span>
           </Link>
         </DropdownMenuItem>
-        <DropdownMenuItem asChild>
-          <Link href="/admin">
-            <Shield className="mr-2 h-4 w-4" />
-            <span>Admin</span>
-          </Link>
-        </DropdownMenuItem>
+        {userRole === 'admin' && (
+          <DropdownMenuItem asChild>
+            <Link href="/admin">
+              <Shield className="mr-2 h-4 w-4" />
+              <span>Admin</span>
+            </Link>
+          </DropdownMenuItem>
+        )}
         <DropdownMenuSeparator />
         <DropdownMenuItem onClick={logOut}>
           <LogOut className="mr-2 h-4 w-4" />

@@ -23,9 +23,9 @@ async function seedDatabaseLogic(): Promise<SeedDatabaseOutput> {
 
   // Sample Users Data
   const usersData = [
-    { id: 'user1', email: 'citizen1@example.com', aadhaar: '111122223333', createdAt: new Date() },
-    { id: 'user2', email: 'citizen2@example.com', aadhaar: '444455556666', createdAt: new Date() },
-    { id: 'user3', email: 'official1@example.gov', aadhaar: '777788889999', createdAt: new Date() },
+    { id: 'user1', email: 'citizen1@example.com', aadhaar: '111122223333', role: 'citizen', aadhaarVerified: true, createdAt: new Date() },
+    { id: 'user2', email: 'citizen2@example.com', aadhaar: '444455556666', role: 'citizen', aadhaarVerified: true, createdAt: new Date() },
+    { id: 'admin1', email: 'admin@example.gov', aadhaar: '777788889999', role: 'admin', aadhaarVerified: true, createdAt: new Date() },
   ];
   const usersCol = collection(db, 'users');
   usersData.forEach(user => {
@@ -99,8 +99,6 @@ async function seedDatabaseLogic(): Promise<SeedDatabaseOutput> {
   } catch (error) {
     console.error("Error writing to Firestore:", error);
     const errorMessage = error instanceof Error ? error.message : "An unknown error occurred.";
-    // We are not re-throwing the error here. Instead we are returning a structured error response.
-    // The action on the client side will need to check the 'success' field.
     return {
         success: false,
         message: `Failed to write seed data to Firestore: ${errorMessage}`,

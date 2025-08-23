@@ -9,14 +9,17 @@ import {
   type User,
 } from "firebase/auth";
 import { auth, db } from "@/lib/firebase";
-import { doc, setDoc } from "firebase/firestore";
+import { doc, setDoc, getDoc } from "firebase/firestore";
 import { useRouter } from "next/navigation";
 import { useToast } from "@/hooks/use-toast";
 import { validateAadhaar } from "@/ai/flows/validate-aadhaar-flow";
 import { Loader2 } from "lucide-react";
 
+type UserRole = 'citizen' | 'admin';
+
 interface AuthContextType {
   user: User | null;
+  userRole: UserRole | null;
   loading: boolean;
   signInWithEmail: (email: string, pass: string) => Promise<void>;
   signUpWithEmail: (email: string, pass: string, aadhaar: string) => Promise<void>;
@@ -27,13 +30,29 @@ export const AuthContext = createContext<AuthContextType | undefined>(undefined)
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
+  const [userRole, setUserRole] = useState<UserRole | null>(null);
   const [loading, setLoading] = useState(true);
   const router = useRouter();
   const { toast } = useToast();
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (user) => {
-      setUser(user);
+    const unsubscribe = onAuthStateChanged(auth, async (user) => {
+      setLoading(true);
+      if (user) {
+        setUser(user);
+        // Fetch user role from Firestore
+        const userDocRef = doc(db, "users", user.uid);
+        const userDoc = await getDoc(userDocRef);
+        if (userDoc.exists()) {
+          setUserRole(userDoc.data().role || 'citizen');
+        } else {
+          // Handle case where user exists in Auth but not in Firestore
+          setUserRole('citizen');
+        }
+      } else {
+        setUser(null);
+        setUserRole(null);
+      }
       setLoading(false);
     });
     return () => unsubscribe();
@@ -56,7 +75,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         description: error.message || "Could not sign in. Please check your credentials and try again.",
       });
     } finally {
-      setLoading(false);
+      // Auth state change will set loading to false
     }
   };
 
@@ -75,7 +94,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       // Create a document in Firestore 'users' collection
       await setDoc(doc(db, "users", newUser.uid), {
         email: newUser.email,
-        aadhaar: aadhaar, // Storing for prototype purposes
+        aadhaar: aadhaar,
+        role: 'citizen',
+        aadhaarVerified: true,
         createdAt: new Date(),
       });
 
@@ -91,8 +112,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         title: "Sign-up Failed",
         description: error.message || "Could not create an account. Please try again.",
       });
+       setLoading(false); // Manually set loading on sign-up failure
     } finally {
-      setLoading(false);
+      // Auth state change will set loading to false on success
     }
   }
 
@@ -116,6 +138,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const value = {
     user,
+    userRole,
     loading,
     signInWithEmail,
     signUpWithEmail,
