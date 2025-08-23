@@ -21,10 +21,6 @@ export type AskLegalQuestionInput = z.infer<typeof AskLegalQuestionInputSchema>;
 const AskLegalQuestionOutputSchema = z.object({
   answer: z.string().describe('The answer to the legal question.'),
   source: z.string().optional().describe('The source of the answer (e.g., FAQ entry).'),
-  relatedCases: z.array(z.object({
-    caseName: z.string().describe('The name or title of the related legal case.'),
-    summary: z.string().describe('A brief summary of the case.'),
-  })).optional().describe('Details of related legal cases, if any.'),
 });
 export type AskLegalQuestionOutput = z.infer<typeof AskLegalQuestionOutputSchema>;
 
@@ -55,9 +51,9 @@ const prompt = ai.definePrompt({
 
   ${faq.map(item => `Question: ${item.question}\nAnswer: ${item.answer}`).join('\n')}
 
-  If the answer is found in the FAQ, return the answer and cite the FAQ entry as the source. Do not add any related cases for FAQ answers.
+  If the answer is found in the FAQ, return the answer and cite the FAQ entry as the source.
 
-  If the answer is not found in the FAQ, use your own knowledge to answer the question and do not cite a source. When using your own knowledge, if relevant, also provide details of up to two relevant legal cases. For each case, include the case name and a brief summary.
+  If the answer is not found in the FAQ, use your own knowledge to answer the question and do not cite a source.
 
   Question: {{{question}}}`,
 });

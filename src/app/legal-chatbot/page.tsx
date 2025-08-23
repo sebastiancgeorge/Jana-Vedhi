@@ -8,19 +8,16 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Bot, Gavel, Send, User, Files, Mic, Volume2, Landmark } from "lucide-react";
+import { Bot, Gavel, Send, User, Files, Mic, Volume2 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { useTranslation } from "@/hooks/use-translation";
-import { Separator } from "@/components/ui/separator";
 
 type Message = {
   id: string;
   text: string;
   sender: "user" | "bot";
   source?: string;
-  relatedCases?: { caseName: string; summary: string }[];
   translatedText?: string;
-  translatedCases?: { caseName: string; summary: string }[];
 };
 
 export default function LegalChatbotPage() {
@@ -60,15 +57,9 @@ export default function LegalChatbotPage() {
 
   const translateMessages = useCallback(async (msgs: Message[]) => {
     const promises = msgs.map(async (msg) => {
-        if (msg.sender === 'bot' && (!msg.translatedText || !msg.translatedCases)) {
-            const translatedText = msg.translatedText ?? await translateDynamicText(msg.text);
-            const translatedCases = msg.translatedCases ?? (msg.relatedCases ? await Promise.all(
-                msg.relatedCases.map(async (c) => ({
-                    caseName: await translateDynamicText(c.caseName),
-                    summary: await translateDynamicText(c.summary)
-                }))
-            ) : undefined);
-            return { ...msg, translatedText, translatedCases };
+        if (msg.sender === 'bot' && !msg.translatedText) {
+            const translatedText = await translateDynamicText(msg.text);
+            return { ...msg, translatedText };
         }
         return msg;
     });
@@ -110,7 +101,6 @@ export default function LegalChatbotPage() {
         text: botResponse.answer,
         sender: "bot",
         source: botResponse.source,
-        relatedCases: botResponse.relatedCases
       };
       setMessages((prev) => [...prev, botMessage]);
     } catch (error) {
@@ -167,7 +157,6 @@ export default function LegalChatbotPage() {
                 </div>
               )}
               {messages.map((message) => {
-                 const cases = language === 'malayalam' ? message.translatedCases : message.relatedCases;
                  const text = language === 'malayalam' && message.translatedText ? message.translatedText : message.text;
 
                 return (
@@ -197,23 +186,6 @@ export default function LegalChatbotPage() {
                         </Badge>
                       )}
                       
-                      {cases && cases.length > 0 && (
-                        <div className="mt-4">
-                           <Separator />
-                           <div className="pt-3">
-                            <h4 className="font-semibold text-sm mb-2 flex items-center gap-2"><Landmark className="h-4 w-4"/>Related Cases</h4>
-                            <div className="space-y-3">
-                                {cases.map((c, i) => (
-                                    <div key={i} className="p-2 bg-background/50 rounded-md border">
-                                        <p className="font-semibold text-sm">{c.caseName}</p>
-                                        <p className="text-xs text-muted-foreground mt-1">{c.summary}</p>
-                                    </div>
-                                ))}
-                            </div>
-                           </div>
-                        </div>
-                      )}
-
                       {message.sender === "bot" && (
                           <Button
                               variant="ghost"
