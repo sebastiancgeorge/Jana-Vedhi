@@ -12,6 +12,7 @@ import { auth } from "@/lib/firebase";
 import { useRouter } from "next/navigation";
 import { useToast } from "@/hooks/use-toast";
 import { validateAadhaar } from "@/ai/flows/validate-aadhaar-flow";
+import { Loader2 } from "lucide-react";
 
 interface AuthContextType {
   user: User | null;
