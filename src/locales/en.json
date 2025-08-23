@@ -1,3 +1,4 @@
+
 {
   "dashboard": "Dashboard",
   "funds_overview": "Funds Overview",
@@ -141,5 +142,28 @@
   "all_departments": "All Departments",
   "grievance_heatmap_desc": "Visualize the density of grievances across Kerala.",
   "kerala_grievance_map": "Kerala Grievance Map",
-  "kerala_grievance_map_desc": "Dots represent individual grievances reported on the platform."
+  "kerala_grievance_map_desc": "Dots represent individual grievances reported on the platform.",
+  "general_chatbot_title": "Jana Vedhi Assistant",
+  "general_chatbot_desc": "Ask me anything about how to use the platform.",
+  "general_chatbot_placeholder": "Ask a question to get started, e.g., 'How do I track public funds?'",
+  "general_chatbot_input_placeholder": "Ask a question about the platform...",
+  "send": "Send",
+  "chatbot_error": "Sorry, something went wrong. Please try again.",
+  "rti_chatbot_title": "RTI Drafting Assistant",
+  "rti_chatbot_desc": "I will guide you through drafting an RTI application step-by-step.",
+  "rti_chatbot_input_placeholder": "Type your answer here...",
+  "rti_draft_preview": "RTI Draft Preview",
+  "rti_draft_preview_desc": "A live preview of your application will appear here.",
+  "rti_draft_placeholder": "Your RTI draft will appear here as you answer the questions.",
+  "export_pdf": "Export as PDF",
+  "save_draft": "Save Draft",
+  "Home Page": "Home Page",
+  "Funds Overview": "Funds Overview",
+  "Budget Voting": "Budget Voting",
+  "Grievance Form": "Grievance Form",
+  "Grievance Heatmap": "Grievance Heatmap",
+  "Politician Tracker": "Politician Tracker",
+  "Legal Chatbot": "Legal Chatbot",
+  "RTI Chatbot": "RTI Chatbot",
+  "Notifications": "Notifications"
 }

@@ -1,18 +1,226 @@
-import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
+
+"use client";
+
+import { useState, useRef, useEffect, type FormEvent } from "react";
+import { getRtiChatbotResponse } from "./actions";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { Bot, FileText, Send, User, Download, Save } from "lucide-react";
+import { useTranslation } from "@/hooks/use-translation";
+import { Textarea } from "@/components/ui/textarea";
+import { jsPDF } from "jspdf";
+
+type Message = {
+  id: string;
+  text: string;
+  sender: "user" | "bot";
+};
+
+type ChatState = {
+  currentStep: string;
+  rtiDraft: string;
+  isDraftComplete: boolean;
+};
 
 export default function RtiChatbotPage() {
+  const [messages, setMessages] = useState<Message[]>([]);
+  const [input, setInput] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
+  const [chatState, setChatState] = useState<ChatState>({
+    currentStep: "Introduction",
+    rtiDraft: "",
+    isDraftComplete: false,
+  });
+  const scrollAreaRef = useRef<HTMLDivElement>(null);
+  const { t } = useTranslation();
+
+  useEffect(() => {
+    // Initial message from the bot
+    const fetchInitialMessage = async () => {
+      setIsLoading(true);
+      try {
+        const initialResponse = await getRtiChatbotResponse({
+          currentStep: "Introduction",
+          userInput: "",
+        });
+        setMessages([{ id: "init", text: initialResponse.response, sender: "bot" }]);
+        setChatState(prev => ({ ...prev, nextStep: initialResponse.nextStep }));
+      } catch (error) {
+        setMessages([{ id: "init-error", text: "Error starting chat.", sender: "bot" }]);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    fetchInitialMessage();
+  }, []);
+
+  useEffect(() => {
+    if (scrollAreaRef.current) {
+      scrollAreaRef.current.scrollTo({
+        top: scrollAreaRef.current.scrollHeight,
+        behavior: "smooth",
+      });
+    }
+  }, [messages]);
+
+  const handleExport = () => {
+    const doc = new jsPDF();
+    doc.text(chatState.rtiDraft, 10, 10);
+    doc.save("rti-application.pdf");
+  };
+  
+  const handleSave = () => {
+    // In a real app, this would save to a database.
+    localStorage.setItem("rtiDraft", chatState.rtiDraft);
+    alert("Draft saved locally!");
+  };
+
+  const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    if (!input.trim() || isLoading || chatState.isDraftComplete) return;
+
+    const userMessage: Message = {
+      id: Date.now().toString(),
+      text: input,
+      sender: "user",
+    };
+    setMessages((prev) => [...prev, userMessage]);
+    const currentInput = input;
+    setInput("");
+    setIsLoading(true);
+
+    try {
+      const botResponse = await getRtiChatbotResponse({
+        currentStep: chatState.currentStep,
+        userInput: currentInput,
+        rtiDraft: chatState.rtiDraft,
+      });
+      const botMessage: Message = {
+        id: (Date.now() + 1).toString(),
+        text: botResponse.response,
+        sender: "bot",
+      };
+      setMessages((prev) => [...prev, botMessage]);
+      setChatState({
+        currentStep: botResponse.nextStep,
+        rtiDraft: botResponse.updatedDraft ?? chatState.rtiDraft,
+        isDraftComplete: botResponse.isDraftComplete,
+      });
+    } catch (error) {
+      const errorMessage: Message = {
+        id: (Date.now() + 1).toString(),
+        text: t("chatbot_error"),
+        sender: "bot",
+      };
+      setMessages((prev) => [...prev, errorMessage]);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   return (
-    <div>
-      <h1 className="text-3xl font-bold tracking-tight text-primary">RTI Drafting Assistant</h1>
-      <p className="text-muted-foreground mb-6">A multi-step chatbot to help you draft an RTI application.</p>
-      <Card>
-        <CardHeader>
-          <CardTitle>Draft your RTI</CardTitle>
-          <CardDescription>I will guide you through the process step-by-step.</CardDescription>
+    <div className="flex flex-col md:flex-row gap-6 h-[calc(100vh-8rem)]">
+      <Card className="flex flex-col flex-1">
+        <CardHeader className="border-b">
+          <div className="flex items-center gap-3">
+            <Bot className="h-6 w-6 text-primary" />
+            <div>
+              <CardTitle>{t("rti_chatbot_title")}</CardTitle>
+              <CardDescription>{t("rti_chatbot_desc")}</CardDescription>
+            </div>
+          </div>
         </CardHeader>
-        <CardContent>
-          <p>A multi-step chat interface for drafting RTI applications will be implemented here.</p>
+        <CardContent className="flex-1 p-0">
+          <ScrollArea className="h-[calc(100vh-23rem)] md:h-[calc(100vh-18rem)]" ref={scrollAreaRef}>
+            <div className="p-6 space-y-6">
+              {messages.map((message) => (
+                <div
+                  key={message.id}
+                  className={`flex items-start gap-4 ${
+                    message.sender === "user" ? "justify-end" : ""
+                  }`}
+                >
+                  {message.sender === "bot" && (
+                    <Avatar className="h-9 w-9 border">
+                      <AvatarFallback><Bot className="h-5 w-5" /></AvatarFallback>
+                    </Avatar>
+                  )}
+                  <div
+                    className={`max-w-md rounded-lg p-3 ${
+                      message.sender === "user"
+                        ? "bg-primary text-primary-foreground"
+                        : "bg-muted"
+                    }`}
+                  >
+                    <p className="text-sm whitespace-pre-wrap">{t(message.text)}</p>
+                  </div>
+                  {message.sender === "user" && (
+                     <Avatar className="h-9 w-9 border">
+                      <AvatarFallback><User className="h-5 w-5" /></AvatarFallback>
+                    </Avatar>
+                  )}
+                </div>
+              ))}
+               {isLoading && (
+                <div className="flex items-start gap-4">
+                  <Avatar className="h-9 w-9 border">
+                    <AvatarFallback><Bot className="h-5 w-5" /></AvatarFallback>
+                  </Avatar>
+                  <div className="max-w-md rounded-lg p-3 bg-muted">
+                    <div className="flex items-center gap-2">
+                      <div className="h-2 w-2 bg-primary rounded-full animate-pulse [animation-delay:-0.3s]"></div>
+                      <div className="h-2 w-2 bg-primary rounded-full animate-pulse [animation-delay:-0.15s]"></div>
+                      <div className="h-2 w-2 bg-primary rounded-full animate-pulse"></div>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+          </ScrollArea>
         </CardContent>
+        <CardFooter className="border-t pt-6">
+          <form onSubmit={handleSubmit} className="flex w-full items-center gap-2">
+            <Input
+              value={input}
+              onChange={(e) => setInput(e.target.value)}
+              placeholder={t("rti_chatbot_input_placeholder")}
+              disabled={isLoading || chatState.isDraftComplete}
+              autoComplete="off"
+            />
+            <Button type="submit" disabled={isLoading || !input.trim() || chatState.isDraftComplete}>
+              <Send className="h-4 w-4" />
+              <span className="sr-only">{t("send")}</span>
+            </Button>
+          </form>
+        </CardFooter>
+      </Card>
+
+      <Card className="w-full md:w-1/3 flex flex-col">
+        <CardHeader>
+            <CardTitle>{t("rti_draft_preview")}</CardTitle>
+            <CardDescription>{t("rti_draft_preview_desc")}</CardDescription>
+        </CardHeader>
+        <CardContent className="flex-1">
+            <Textarea
+                className="h-full resize-none"
+                value={t(chatState.rtiDraft)}
+                readOnly
+                placeholder={t("rti_draft_placeholder")}
+            />
+        </CardContent>
+         <CardFooter className="flex-col sm:flex-row gap-2">
+            <Button onClick={handleExport} disabled={!chatState.isDraftComplete} className="w-full">
+                <Download className="mr-2 h-4 w-4" />
+                {t("export_pdf")}
+            </Button>
+            <Button onClick={handleSave} disabled={!chatState.isDraftComplete} variant="outline" className="w-full">
+                <Save className="mr-2 h-4 w-4" />
+                {t("save_draft")}
+            </Button>
+        </CardFooter>
       </Card>
     </div>
   );
