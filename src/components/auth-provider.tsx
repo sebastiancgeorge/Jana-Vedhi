@@ -1,3 +1,4 @@
+
 "use client";
 
 import { createContext, useEffect, useState, type ReactNode } from "react";
@@ -69,11 +70,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       });
     } catch (error: any) {
       console.error("Error signing in:", error);
-       toast({
-        variant: "destructive",
-        title: "Sign-in Failed",
-        description: error.message || "Could not sign in. Please check your credentials and try again.",
-      });
+      // Re-throw the error so the calling component can handle it
+      throw error;
     } finally {
       // Auth state change will set loading to false
     }

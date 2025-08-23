@@ -1,3 +1,4 @@
+
 "use client";
 
 import { Button } from "@/components/ui/button";
@@ -43,11 +44,15 @@ const signUpSchema = z.object({
   aadhaar: z.string().regex(/^[0-9]{12}$/, { message: "Must be a 12-digit Aadhaar number." }),
 });
 
+const MAX_ATTEMPTS = 3;
+
 export default function LoginPage() {
   const { user, signInWithEmail, signUpWithEmail, loading } = useAuth();
   const router = useRouter();
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [loginAttempts, setLoginAttempts] = useState<{ [email: string]: number }>({});
+  const [lockout, setLockout] = useState<{ [email: string]: Date }>({});
 
   const signInForm = useForm<z.infer<typeof signInSchema>>({
     resolver: zodResolver(signInSchema),
@@ -68,8 +73,65 @@ export default function LoginPage() {
 
   const onSignInSubmit = async (values: z.infer<typeof signInSchema>) => {
     setIsSubmitting(true);
-    await signInWithEmail(values.email, values.password);
-    setIsSubmitting(false);
+    const { email, password } = values;
+
+    if (lockout[email] && new Date() < lockout[email]) {
+      const remainingTime = Math.ceil((lockout[email].getTime() - new Date().getTime()) / 1000);
+      toast({
+        variant: "destructive",
+        title: "Too many attempts",
+        description: `Please try again in ${remainingTime} seconds.`,
+      });
+      setIsSubmitting(false);
+      return;
+    }
+
+
+    try {
+      await signInWithEmail(email, password);
+      // Reset attempts on successful login
+      if (loginAttempts[email]) {
+        setLoginAttempts(prev => {
+          const newAttempts = { ...prev };
+          delete newAttempts[email];
+          return newAttempts;
+        });
+        setLockout(prev => {
+            const newLockout = { ...prev };
+            delete newLockout[email];
+            return newLockout;
+        });
+      }
+    } catch (error: any) {
+        if (error.code === 'auth/wrong-password' || error.code === 'auth/user-not-found' || error.code === 'auth/invalid-credential') {
+            const currentAttempts = (loginAttempts[email] || 0) + 1;
+            setLoginAttempts(prev => ({...prev, [email]: currentAttempts}));
+
+            if(currentAttempts >= MAX_ATTEMPTS) {
+                const lockoutUntil = new Date(new Date().getTime() + 60000); // 1 minute lockout
+                setLockout(prev => ({...prev, [email]: lockoutUntil}));
+                toast({
+                    variant: "destructive",
+                    title: "Too many failed attempts",
+                    description: "Your account is temporarily locked. Please try again in a minute.",
+                });
+            } else {
+                 toast({
+                    variant: "destructive",
+                    title: "Sign-in Failed",
+                    description: `Invalid credentials. ${MAX_ATTEMPTS - currentAttempts} attempts remaining.`,
+                });
+            }
+        } else {
+            toast({
+                variant: "destructive",
+                title: "Sign-in Failed",
+                description: error.message || "An unexpected error occurred.",
+            });
+        }
+    } finally {
+        setIsSubmitting(false);
+    }
   };
 
   const onSignUpSubmit = async (values: z.infer<typeof signUpSchema>) => {
@@ -77,6 +139,8 @@ export default function LoginPage() {
     await signUpWithEmail(values.email, values.password, values.aadhaar);
     setIsSubmitting(false);
   };
+  
+  const isLocked = signInForm.watch("email") && lockout[signInForm.watch("email")] && new Date() < lockout[signInForm.watch("email")];
 
   return (
     <div className="flex min-h-[calc(100vh-8rem)] items-center justify-center bg-background">
@@ -125,9 +189,9 @@ export default function LoginPage() {
                       </FormItem>
                     )}
                   />
-                  <Button type="submit" className="w-full" disabled={isSubmitting || loading}>
+                  <Button type="submit" className="w-full" disabled={isSubmitting || loading || isLocked}>
                     {isSubmitting || loading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
-                    Sign In
+                    {isLocked ? "Account Locked" : "Sign In"}
                   </Button>
                 </form>
               </Form>
