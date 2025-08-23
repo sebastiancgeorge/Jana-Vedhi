@@ -181,7 +181,7 @@ export async function deleteBudget(id: string) {
         await deleteDoc(doc(db, "budgets", id));
         revalidatePath("/admin");
         return { success: true };
-    } catch (error)
+    } catch (error) {
         console.error("Error deleting budget:", error);
         throw new Error("Failed to delete budget.");
     }
