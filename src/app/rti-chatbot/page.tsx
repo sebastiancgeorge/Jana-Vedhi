@@ -68,18 +68,6 @@ export default function RtiChatbotPage() {
   }, [language]);
 
 
-  const translateMessages = useCallback(async (msgs: Message[]) => {
-    const promises = msgs.map(async (msg) => {
-        if (msg.sender === 'bot' && !msg.translatedText) {
-            const translated = await translateDynamicText(msg.text);
-            return { ...msg, translatedText: translated };
-        }
-        return msg;
-    });
-    const newMessages = await Promise.all(promises);
-    setMessages(newMessages);
-  }, [translateDynamicText]);
-
   const translateRtiDraft = useCallback(async (draft: string) => {
     if (draft) {
       const translated = await translateDynamicText(draft);
@@ -88,14 +76,31 @@ export default function RtiChatbotPage() {
   }, [translateDynamicText]);
   
   useEffect(() => {
-    translateMessages(messages);
-  }, [language, messages, translateMessages]);
+    // Re-translate all bot messages when language changes
+    const reTranslateMessages = async () => {
+        setMessages(prevMessages => {
+            const newMessagesPromises = prevMessages.map(async (msg) => {
+                if (msg.sender === 'bot') {
+                    const translated = await translateDynamicText(msg.text);
+                    return { ...msg, translatedText: translated };
+                }
+                return msg;
+            });
+            Promise.all(newMessagesPromises).then(newMessages => setMessages(newMessages));
+            return prevMessages; // Return original while fetching new translations
+        });
+    };
 
-  useEffect(() => {
     if (language === 'malayalam') {
+      reTranslateMessages();
       translateRtiDraft(chatState.rtiDraft);
+    } else {
+      // If switching back to english, clear translated text
+      setMessages(prev => prev.map(m => m.sender === 'bot' ? {...m, translatedText: undefined} : m));
+      setChatState(prev => ({ ...prev, translatedRtiDraft: undefined }));
     }
-  }, [language, chatState.rtiDraft, translateRtiDraft]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [language]);
 
 
   useEffect(() => {
@@ -107,7 +112,8 @@ export default function RtiChatbotPage() {
           currentStep: "Introduction",
           userInput: "",
         });
-        setMessages([{ id: "init", text: initialResponse.response, sender: "bot" }]);
+        const translatedText = await translateDynamicText(initialResponse.response);
+        setMessages([{ id: "init", text: initialResponse.response, sender: "bot", translatedText }]);
         setChatState(prev => ({ ...prev, currentStep: initialResponse.nextStep }));
       } catch (error) {
         setMessages([{ id: "init-error", text: "Error starting chat.", sender: "bot" }]);
@@ -163,23 +169,33 @@ export default function RtiChatbotPage() {
         userInput: currentInput,
         rtiDraft: chatState.rtiDraft,
       });
+
+      const translatedText = await translateDynamicText(botResponse.response);
       const botMessage: Message = {
         id: (Date.now() + 1).toString(),
         text: botResponse.response,
         sender: "bot",
+        translatedText,
       };
       setMessages((prev) => [...prev, botMessage]);
+
+      const newDraft = botResponse.updatedDraft ?? chatState.rtiDraft;
+      const translatedDraft = await translateDynamicText(newDraft);
+
       setChatState({
-        ...chatState,
         currentStep: botResponse.nextStep,
-        rtiDraft: botResponse.updatedDraft ?? chatState.rtiDraft,
+        rtiDraft: newDraft,
         isDraftComplete: botResponse.isDraftComplete,
+        translatedRtiDraft: translatedDraft,
       });
     } catch (error) {
+      const errorMessageText = t("chatbot_error");
+      const translatedError = await translateDynamicText(errorMessageText);
       const errorMessage: Message = {
         id: (Date.now() + 1).toString(),
-        text: t("chatbot_error"),
+        text: errorMessageText,
         sender: "bot",
+        translatedText: translatedError
       };
       setMessages((prev) => [...prev, errorMessage]);
     } finally {

@@ -16,7 +16,6 @@ type Message = {
   id: string;
   text: string;
   sender: "user" | "bot";
-  source?: string;
   translatedText?: string;
 };
 
@@ -55,21 +54,30 @@ export default function LegalChatbotPage() {
   }, [language]);
 
 
-  const translateMessages = useCallback(async (msgs: Message[]) => {
-    const promises = msgs.map(async (msg) => {
-        if (msg.sender === 'bot' && !msg.translatedText) {
-            const translatedText = await translateDynamicText(msg.text);
-            return { ...msg, translatedText };
-        }
-        return msg;
-    });
-    const newMessages = await Promise.all(promises);
-    setMessages(newMessages);
-  }, [translateDynamicText]);
-
   useEffect(() => {
-    translateMessages(messages);
-  }, [language, messages, translateMessages]);
+    // Re-translate all bot messages when language changes
+    const reTranslateMessages = async () => {
+        setMessages(prevMessages => {
+            const newMessagesPromises = prevMessages.map(async (msg) => {
+                if (msg.sender === 'bot') {
+                    const translated = await translateDynamicText(msg.text);
+                    return { ...msg, translatedText: translated };
+                }
+                return msg;
+            });
+            Promise.all(newMessagesPromises).then(newMessages => setMessages(newMessages));
+            return prevMessages; // Return original while fetching new translations
+        });
+    };
+
+    if (language === 'malayalam') {
+      reTranslateMessages();
+    } else {
+      // If switching back to english, clear translated text
+      setMessages(prev => prev.map(m => m.sender === 'bot' ? {...m, translatedText: undefined} : m));
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [language]);
 
   useEffect(() => {
     if (scrollAreaRef.current) {
@@ -96,18 +104,22 @@ export default function LegalChatbotPage() {
 
     try {
       const botResponse = await getLegalChatbotResponse(currentInput);
+      const translatedText = await translateDynamicText(botResponse.answer);
       const botMessage: Message = {
         id: (Date.now() + 1).toString(),
         text: botResponse.answer,
         sender: "bot",
-        source: botResponse.source,
+        translatedText: translatedText,
       };
       setMessages((prev) => [...prev, botMessage]);
     } catch (error) {
+       const errorMessageText = t("chatbot_error");
+       const translatedError = await translateDynamicText(errorMessageText);
       const errorMessage: Message = {
         id: (Date.now() + 1).toString(),
-        text: "Sorry, something went wrong. Please try again.",
+        text: errorMessageText,
         sender: "bot",
+        translatedText: translatedError
       };
       setMessages((prev) => [...prev, errorMessage]);
     } finally {
