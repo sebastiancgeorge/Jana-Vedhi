@@ -138,5 +138,8 @@
   "Clean water is being wasted due to a leak in the main pipeline.": "പ്രധാന പൈപ്പ് ലൈനിലെ ചോർച്ച കാരണം ശുദ്ധജലം പാഴാകുന്നു.",
   "Clogged drainage system": "അടഞ്ഞ ഡ്രെയിനേജ് സംവിധാനം",
   "The drainage in our locality is clogged, causing waterlogging.": "ഞങ്ങളുടെ പ്രദേശത്തെ ഡ്രെയിനേജ് അടഞ്ഞതിനാൽ വെള്ളക്കെട്ട് ഉണ്ടാകുന്നു.",
-  "all_departments": "എല്ലാ വകുപ്പുകളും"
+  "all_departments": "എല്ലാ വകുപ്പുകളും",
+  "grievance_heatmap_desc": "കേരളത്തിലുടനീളമുള്ള പരാതികളുടെ സാന്ദ്രത ദൃശ്യവൽക്കരിക്കുക.",
+  "kerala_grievance_map": "കേരളത്തിലെ പരാതി മാപ്പ്",
+  "kerala_grievance_map_desc": "ഡോട്ടുകൾ പ്ലാറ്റ്‌ഫോമിൽ റിപ്പോർട്ട് ചെയ്ത വ്യക്തിഗത പരാതികളെ പ്രതിനിധീകരിക്കുന്നു."
 }

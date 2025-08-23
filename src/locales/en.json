@@ -138,5 +138,8 @@
   "Clean water is being wasted due to a leak in the main pipeline.": "Clean water is being wasted due to a leak in the main pipeline.",
   "Clogged drainage system": "Clogged drainage system",
   "The drainage in our locality is clogged, causing waterlogging.": "The drainage in our locality is clogged, causing waterlogging.",
-  "all_departments": "All Departments"
+  "all_departments": "All Departments",
+  "grievance_heatmap_desc": "Visualize the density of grievances across Kerala.",
+  "kerala_grievance_map": "Kerala Grievance Map",
+  "kerala_grievance_map_desc": "Dots represent individual grievances reported on the platform."
 }
