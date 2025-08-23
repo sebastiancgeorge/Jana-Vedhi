@@ -11,8 +11,8 @@ import { Button } from "@/components/ui/button";
 import { ArrowUpDown, Loader2 } from "lucide-react";
 import { useTranslation } from "@/hooks/use-translation";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Bar, CartesianGrid, XAxis, YAxis, Legend, BarChart as RechartsBarChart } from "recharts";
-import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart";
+import { Bar, CartesianGrid, XAxis, YAxis, Legend, BarChart as RechartsBarChart, Pie, Cell, PieChart as RechartsPieChart } from "recharts";
+import { ChartContainer, ChartTooltip, ChartTooltipContent, ChartLegend, ChartLegendContent } from "@/components/ui/chart";
 
 interface Fund {
   id: string;
@@ -21,6 +21,8 @@ interface Fund {
   allocated: number;
   utilized: number;
 }
+
+const COLORS = ["hsl(var(--chart-1))", "hsl(var(--chart-2))", "hsl(var(--chart-3))", "hsl(var(--chart-4))", "hsl(var(--chart-5))"];
 
 export default function FundsPage() {
   const [funds, setFunds] = useState<Fund[]>([]);
@@ -65,6 +67,15 @@ export default function FundsPage() {
         utilized: dataByDept[dept].utilized
     }));
   }, [funds, t]);
+  
+  const pieChartData = useMemo(() => {
+    const totalAllocated = funds.reduce((acc, fund) => acc + fund.allocated, 0);
+    return chartData.map(dept => ({
+      name: dept.department,
+      value: dept.allocated,
+      percentage: totalAllocated > 0 ? ((dept.allocated / totalAllocated) * 100).toFixed(1) : 0,
+    }));
+  }, [chartData, funds]);
 
 
   const columns: ColumnDef<Fund>[] = useMemo(() => [
@@ -138,28 +149,49 @@ export default function FundsPage() {
         <h1 className="text-3xl font-bold tracking-tight text-primary">{t("funds_overview")}</h1>
         <p className="text-muted-foreground">{t("funds_overview_desc")}</p>
       </header>
-       <Card>
-        <CardHeader>
-            <CardTitle>Fund Utilization by Department</CardTitle>
-            <CardDescription>Comparison of allocated vs. utilized funds.</CardDescription>
-        </CardHeader>
-        <CardContent>
-            <ChartContainer config={{
-                allocated: { label: t('allocated_funds'), color: "hsl(var(--chart-2))" },
-                utilized: { label: t('utilized_funds'), color: "hsl(var(--chart-1))" },
-            }} className="h-[300px] w-full">
-                <RechartsBarChart data={chartData} margin={{ top: 20, right: 20, bottom: 5, left: 0 }}>
-                    <CartesianGrid vertical={false} />
-                    <XAxis dataKey="department" tickLine={false} tickMargin={10} axisLine={false} angle={-45} textAnchor="end" height={80} />
-                    <YAxis tickFormatter={(value) => `₹${Number(value) / 100000}L`} />
-                    <ChartTooltip content={<ChartTooltipContent />} />
-                    <Legend />
-                    <Bar dataKey="allocated" fill="var(--color-allocated)" radius={4} />
-                    <Bar dataKey="utilized" fill="var(--color-utilized)" radius={4} />
-                </RechartsBarChart>
-            </ChartContainer>
-        </CardContent>
-      </Card>
+       <div className="grid gap-6 md:grid-cols-2">
+         <Card>
+          <CardHeader>
+              <CardTitle>Fund Utilization by Department</CardTitle>
+              <CardDescription>Comparison of allocated vs. utilized funds.</CardDescription>
+          </CardHeader>
+          <CardContent>
+              <ChartContainer config={{
+                  allocated: { label: t('allocated_funds'), color: "hsl(var(--chart-2))" },
+                  utilized: { label: t('utilized_funds'), color: "hsl(var(--chart-1))" },
+              }} className="h-[300px] w-full">
+                  <RechartsBarChart data={chartData} margin={{ top: 20, right: 20, bottom: 5, left: 0 }}>
+                      <CartesianGrid vertical={false} />
+                      <XAxis dataKey="department" tickLine={false} tickMargin={10} axisLine={false} angle={-45} textAnchor="end" height={80} />
+                      <YAxis tickFormatter={(value) => `₹${Number(value) / 100000}L`} />
+                      <ChartTooltip content={<ChartTooltipContent />} />
+                      <Legend />
+                      <Bar dataKey="allocated" fill="var(--color-allocated)" radius={4} />
+                      <Bar dataKey="utilized" fill="var(--color-utilized)" radius={4} />
+                  </RechartsBarChart>
+              </ChartContainer>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader>
+            <CardTitle>Fund Distribution by Department</CardTitle>
+            <CardDescription>Percentage of total allocated funds per department.</CardDescription>
+          </CardHeader>
+          <CardContent className="flex items-center justify-center">
+             <ChartContainer config={{}} className="h-[300px] w-full">
+                <RechartsPieChart>
+                    <ChartTooltip content={<ChartTooltipContent nameKey="name" />} />
+                    <Pie data={pieChartData} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={100} label={({ percentage }) => `${percentage}%`}>
+                       {pieChartData.map((entry, index) => (
+                        <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                      ))}
+                    </Pie>
+                    <ChartLegend content={<ChartLegendContent nameKey="name" />} />
+                </RechartsPieChart>
+             </ChartContainer>
+          </CardContent>
+        </Card>
+       </div>
       <Card>
         <CardHeader>
           <CardTitle>{t("public_funds_tracker")}</CardTitle>
@@ -241,3 +273,5 @@ export default function FundsPage() {
     </div>
   );
 }
+
+    
