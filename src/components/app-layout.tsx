@@ -25,6 +25,7 @@ import {
   Languages,
   LayoutDashboard,
   Leaf,
+  LogIn,
   LogOut,
   Map,
   Shield,
@@ -42,12 +43,9 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-  DropdownMenuSub,
-  DropdownMenuSubTrigger,
-  DropdownMenuPortal,
-  DropdownMenuSubContent,
 } from "@/components/ui/dropdown-menu";
 import { FontSizeSlider } from "./font-size-slider";
+import { useAuth } from "@/hooks/use-auth";
 
 const navItems = [
   { href: "/", label: "Dashboard", icon: LayoutDashboard },
@@ -67,6 +65,10 @@ const chatbotItems = [
 
 export function AppLayout({ children }: { children: ReactNode }) {
   const pathname = usePathname();
+
+  if (pathname === '/login') {
+    return <main className="flex-1">{children}</main>;
+  }
 
   return (
     <SidebarProvider>
@@ -140,6 +142,19 @@ export function AppLayout({ children }: { children: ReactNode }) {
 }
 
 function UserMenu() {
+  const { user, signOut: logOut } = useAuth();
+
+  if (!user) {
+    return (
+      <Button asChild variant="ghost" className="w-full justify-start">
+        <Link href="/login">
+          <LogIn className="mr-2 h-4 w-4" />
+          Log In
+        </Link>
+      </Button>
+    )
+  }
+
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
@@ -148,13 +163,13 @@ function UserMenu() {
           className="flex w-full items-center justify-start gap-2 p-2"
         >
           <Avatar className="h-8 w-8">
-            <AvatarImage src="https://placehold.co/40x40.png" alt="User" />
-            <AvatarFallback>JV</AvatarFallback>
+            <AvatarImage src={user.photoURL ?? undefined} alt={user.displayName ?? 'User'} />
+            <AvatarFallback>{user.displayName?.charAt(0) ?? 'U'}</AvatarFallback>
           </Avatar>
           <div className="text-left group-data-[collapsible=icon]:hidden">
-            <p className="text-sm font-medium">Citizen</p>
+            <p className="text-sm font-medium">{user.displayName ?? 'Citizen'}</p>
             <p className="text-xs text-sidebar-foreground/70">
-              user@example.com
+              {user.email ?? 'user@example.com'}
             </p>
           </div>
         </Button>
@@ -162,9 +177,9 @@ function UserMenu() {
       <DropdownMenuContent className="w-56" align="end" forceMount>
         <DropdownMenuLabel className="font-normal">
           <div className="flex flex-col space-y-1">
-            <p className="text-sm font-medium leading-none">Citizen</p>
+            <p className="text-sm font-medium leading-none">{user.displayName ?? 'Citizen'}</p>
             <p className="text-xs leading-none text-muted-foreground">
-              user@example.com
+              {user.email}
             </p>
           </div>
         </DropdownMenuLabel>
@@ -182,7 +197,7 @@ function UserMenu() {
           </Link>
         </DropdownMenuItem>
         <DropdownMenuSeparator />
-        <DropdownMenuItem>
+        <DropdownMenuItem onClick={logOut}>
           <LogOut className="mr-2 h-4 w-4" />
           <span>Log out</span>
         </DropdownMenuItem>
