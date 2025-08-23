@@ -22,6 +22,7 @@ async function seedDatabaseLogic(): Promise<SeedDatabaseOutput> {
   const batch = writeBatch(db);
 
   // Sample Users Data
+  // Note: Using the email as the document ID for the admin for easier lookup.
   const usersData = [
     { id: 'user1', email: 'citizen1@example.com', aadhaar: '111122223333', role: 'citizen', aadhaarVerified: true, createdAt: new Date() },
     { id: 'user2', email: 'citizen2@example.com', aadhaar: '444455556666', role: 'citizen', aadhaarVerified: true, createdAt: new Date() },
@@ -30,7 +31,7 @@ async function seedDatabaseLogic(): Promise<SeedDatabaseOutput> {
     { id: 'user5', email: 'citizen5@example.com', aadhaar: '987698769876', role: 'citizen', aadhaarVerified: true, createdAt: new Date() },
     { id: 'user6', email: 'citizen6@example.com', aadhaar: '432143214321', role: 'citizen', aadhaarVerified: true, createdAt: new Date() },
     { id: 'user7', email: 'citizen7@example.com', aadhaar: '876587658765', role: 'citizen', aadhaarVerified: true, createdAt: new Date() },
-    { id: 'admin1', email: 'admin@example.gov', aadhaar: '777788889999', role: 'admin', aadhaarVerified: true, createdAt: new Date() },
+    { id: 'admin@example.gov', email: 'admin@example.gov', aadhaar: '777788889999', role: 'admin', aadhaarVerified: true, createdAt: new Date() },
   ];
   const usersCol = collection(db, 'users');
   usersData.forEach(user => {

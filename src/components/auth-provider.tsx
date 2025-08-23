@@ -10,7 +10,7 @@ import {
   type User,
 } from "firebase/auth";
 import { auth, db } from "@/lib/firebase";
-import { doc, setDoc, getDoc } from "firebase/firestore";
+import { doc, setDoc, getDoc, collection, query, where, getDocs } from "firebase/firestore";
 import { useRouter } from "next/navigation";
 import { useToast } from "@/hooks/use-toast";
 import { validateAadhaar } from "@/ai/flows/validate-aadhaar-flow";
@@ -49,8 +49,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         } else {
           // This might happen if a user is created in Auth but their Firestore doc fails to write
           // or during the brief moment after sign-up before the doc is created.
-          // Defaulting to 'citizen' is a safe fallback.
-          setUserRole('citizen');
+          // Let's also check if an admin document exists with this email, in case UID doesn't match up
+          // (e.g., if auth user was created manually and seeded doc has a different ID).
+          const usersRef = collection(db, "users");
+          const q = query(usersRef, where("email", "==", user.email), where("role", "==", "admin"));
+          const querySnapshot = await getDocs(q);
+          if (!querySnapshot.empty) {
+            setUserRole('admin');
+          } else {
+            setUserRole('citizen');
+          }
         }
       } else {
         setUser(null);
@@ -83,29 +91,38 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setLoading(true);
     try {
       const validationResult = await validateAadhaar({ aadhaarNumber: aadhaar });
-
+  
       if (!validationResult.isValid) {
         throw new Error(validationResult.reason || "Invalid Aadhaar number.");
       }
-      
+  
+      // Check if a user document with this email already exists and is an admin
+      const adminDocRef = doc(db, "users", email);
+      const adminDoc = await getDoc(adminDocRef);
+      if (adminDoc.exists() && adminDoc.data()?.role === 'admin') {
+         // If the admin user tries to "sign up", we just log them in instead.
+         // This assumes they are using a password they remember or a new one.
+         // For a real app, a "Forgot Password" flow is better.
+         // Here, we'll try to sign in. If it fails, it means wrong password.
+         await signInWithEmail(email, pass);
+         return; // Skip the rest of the sign-up process
+      }
+  
       const userCredential = await createUserWithEmailAndPassword(auth, email, pass);
       const newUser = userCredential.user;
-
-      // Upon sign-up, all users are citizens. Admin role must be set manually in Firestore
-      // or through a secure admin panel. This prevents anyone from signing up as an admin.
-      const role: UserRole = 'citizen';
-
-      // Create a document in Firestore 'users' collection
+  
+      // Create a document in Firestore 'users' collection for the new citizen
       await setDoc(doc(db, "users", newUser.uid), {
+        uid: newUser.uid, // Store UID
         email: newUser.email,
         aadhaar: aadhaar,
-        role: role, // Default role is 'citizen'
+        role: 'citizen', // Default role is 'citizen'
         aadhaarVerified: true,
         createdAt: new Date(),
       });
       
-      setUserRole(role);
-
+      setUserRole('citizen');
+  
       router.push("/");
       toast({
         title: "Account Created",
@@ -157,5 +174,3 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     </AuthContext.Provider>
   );
 }
-
-    
