@@ -3,7 +3,7 @@
 
 import { seedDatabaseFlow } from "@/ai/flows/seed-database-flow";
 import { db } from "@/lib/firebase";
-import { collection, getDocs, doc, updateDoc, deleteDoc, addDoc, serverTimestamp } from "firebase/firestore";
+import { collection, getDocs, doc, updateDoc, deleteDoc, addDoc, serverTimestamp, type Timestamp } from "firebase/firestore";
 import { revalidatePath } from "next/cache";
 
 export async function seedDatabase() {
@@ -31,7 +31,7 @@ export interface Grievance {
     status: GrievanceStatus;
     type: string;
     userId: string;
-    createdAt: any;
+    createdAt: Timestamp; // Correctly type the Firestore Timestamp
 }
 
 
@@ -39,6 +39,8 @@ export async function getGrievances(): Promise<Grievance[]> {
     try {
         const grievancesCol = collection(db, "grievances");
         const snapshot = await getDocs(grievancesCol);
+         // The data is already serializable as long as we type it correctly.
+         // Next.js handles the conversion of Timestamps automatically if they are typed.
         return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Grievance));
     } catch (error) {
         console.error("Error fetching grievances:", error);
@@ -179,7 +181,7 @@ export async function deleteBudget(id: string) {
         await deleteDoc(doc(db, "budgets", id));
         revalidatePath("/admin");
         return { success: true };
-    } catch (error) {
+    } catch (error)
         console.error("Error deleting budget:", error);
         throw new Error("Failed to delete budget.");
     }
