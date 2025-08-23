@@ -22,7 +22,7 @@ const customIcon = new L.Icon({
     shadowSize: [41, 41]
 });
 
-export const KeralaMap = React.forwardRef<HTMLDivElement, KeralaMapProps>(({ points }, ref) => {
+export const KeralaMap = React.memo(React.forwardRef<HTMLDivElement, KeralaMapProps>(({ points }, ref) => {
   // Center of Kerala
   const position: LatLngExpression = [10.8505, 76.2711];
 
@@ -47,6 +47,6 @@ export const KeralaMap = React.forwardRef<HTMLDivElement, KeralaMapProps>(({ poi
         </MapContainer>
     </div>
   );
-});
+}));
 
 KeralaMap.displayName = "KeralaMap";
