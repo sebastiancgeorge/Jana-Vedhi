@@ -48,6 +48,7 @@ import { FontSizeSlider } from "./font-size-slider";
 import { useAuth } from "@/hooks/use-auth";
 import { useLanguage } from "./language-provider";
 import { useTranslation } from "@/hooks/use-translation";
+import { ThemeSwitcher } from "./theme-switcher";
 
 
 export function AppLayout({ children }: { children: ReactNode }) {
@@ -136,6 +137,7 @@ export function AppLayout({ children }: { children: ReactNode }) {
             {/* Breadcrumbs or page title can go here */}
           </div>
           <div className="flex items-center gap-4">
+            <ThemeSwitcher />
             <LanguageSwitcher />
             <FontSizeSlider />
           </div>
