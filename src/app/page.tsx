@@ -9,8 +9,8 @@ import { useTranslation } from "@/hooks/use-translation";
 import { useEffect, useState } from "react";
 import { db } from "@/lib/firebase";
 import { collection, getDocs, query, where, Timestamp } from "firebase/firestore";
-import { Bar, CartesianGrid, XAxis, YAxis, BarChart as RechartsBarChart, Pie, Cell, PieChart as RechartsPieChart } from "recharts";
-import { ChartContainer, ChartTooltip, ChartTooltipContent, ChartLegend, ChartLegendContent } from "@/components/ui/chart";
+import { Bar, CartesianGrid, XAxis, YAxis, BarChart as RechartsBarChart } from "recharts";
+import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart";
 
 interface DashboardStats {
   activeGrievances: number;
@@ -24,22 +24,12 @@ interface DashboardStats {
 interface GrievanceChartData {
   type: string;
   count: number;
-  fill: string;
 }
-
-interface BudgetChartData {
-    name: string;
-    value: number;
-    fill: string;
-}
-
-const COLORS = ["hsl(var(--chart-1))", "hsl(var(--chart-2))", "hsl(var(--chart-3))", "hsl(var(--chart-4))", "hsl(var(--chart-5))"];
 
 export default function Home() {
   const { t } = useTranslation();
   const [stats, setStats] = useState<DashboardStats | null>(null);
   const [grievanceData, setGrievanceData] = useState<GrievanceChartData[]>([]);
-  const [budgetData, setBudgetData] = useState<BudgetChartData[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -70,10 +60,9 @@ export default function Home() {
             const type = doc.data().type || 'Other';
             grievancesByType[type] = (grievancesByType[type] || 0) + 1;
         });
-        const grievanceChartData = Object.keys(grievancesByType).map((type, index) => ({
+        const grievanceChartData = Object.keys(grievancesByType).map(type => ({
             type: t(type),
             count: grievancesByType[type],
-            fill: COLORS[index % COLORS.length]
         }));
         setGrievanceData(grievanceChartData);
 
@@ -84,21 +73,6 @@ export default function Home() {
         const totalUtilized = fundsData.reduce((acc, fund) => acc + (fund.utilized || 0), 0);
 
         // Budgets
-        const budgetsSnapshot = await getDocs(budgetsRef);
-        const budgetStatusCounts = budgetsSnapshot.docs.reduce((acc, doc) => {
-            const status = doc.data().status || 'closed';
-            acc[status] = (acc[status] || 0) + 1;
-            return acc;
-        }, { open: 0, closed: 0 });
-
-        const budgetChartData = Object.keys(budgetStatusCounts).map((status, index) => ({
-            name: t(status),
-            value: budgetStatusCounts[status as keyof typeof budgetStatusCounts],
-            fill: COLORS[index % COLORS.length]
-        }));
-        setBudgetData(budgetChartData);
-
-
         const ongoingVotesQuery = query(budgetsRef, where("status", "==", "open"));
         const ongoingVotesSnapshot = await getDocs(ongoingVotesQuery);
 
@@ -229,6 +203,7 @@ export default function Home() {
                 <ChartContainer config={{
                     count: {
                         label: "Count",
+                        color: "hsl(var(--chart-1))"
                     },
                 }} className="h-[300px] w-full">
                     <RechartsBarChart data={grievanceData} layout="vertical" margin={{ top: 20, right: 20, bottom: 5, left: 0 }}>
@@ -236,11 +211,7 @@ export default function Home() {
                         <YAxis dataKey="type" type="category" tickLine={false} tickMargin={10} axisLine={false} />
                         <XAxis type="number" />
                         <ChartTooltip content={<ChartTooltipContent />} />
-                        <Bar dataKey="count" radius={4}>
-                            {grievanceData.map((entry) => (
-                                <Cell key={`cell-${entry.type}`} fill={entry.fill} />
-                            ))}
-                        </Bar>
+                        <Bar dataKey="count" fill="var(--color-count)" radius={4} />
                     </RechartsBarChart>
                 </ChartContainer>
             </CardContent>
@@ -249,21 +220,11 @@ export default function Home() {
        <div className="grid gap-6 md:grid-cols-2">
          <Card>
             <CardHeader>
-                <CardTitle>Budget Status</CardTitle>
-                <CardDescription>Breakdown of open and closed budget proposals.</CardDescription>
+                <CardTitle>Coming Soon</CardTitle>
+                <CardDescription>More visualizations will be added here.</CardDescription>
             </CardHeader>
-            <CardContent className="flex items-center justify-center">
-                <ChartContainer config={{}} className="h-[250px] w-full">
-                    <RechartsPieChart>
-                        <ChartTooltip content={<ChartTooltipContent />} />
-                        <Pie data={budgetData} dataKey="value" nameKey="name" cx="50%" cy="50%" innerRadius={50} outerRadius={80} label>
-                             {budgetData.map((entry) => (
-                                <Cell key={`cell-${entry.name}`} fill={entry.fill} />
-                            ))}
-                        </Pie>
-                         <ChartLegend content={<ChartLegendContent />} />
-                    </RechartsPieChart>
-                </ChartContainer>
+            <CardContent className="flex items-center justify-center h-[250px] text-muted-foreground">
+                <BarChart className="h-16 w-16" />
             </CardContent>
          </Card>
          <Card>
