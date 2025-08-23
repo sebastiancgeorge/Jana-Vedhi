@@ -1,13 +1,16 @@
+
 "use client";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Banknote, FilePenLine, Gavel, Vote, Loader2 } from "lucide-react";
+import { Banknote, FilePenLine, Gavel, Vote, Loader2, BarChart } from "lucide-react";
 import Link from "next/link";
 import { useTranslation } from "@/hooks/use-translation";
 import { useEffect, useState } from "react";
 import { db } from "@/lib/firebase";
 import { collection, getDocs, query, where, Timestamp } from "firebase/firestore";
+import { Bar, CartesianGrid, XAxis, YAxis, BarChart as RechartsBarChart } from "recharts";
+import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart"
 
 interface DashboardStats {
   activeGrievances: number;
@@ -18,9 +21,15 @@ interface DashboardStats {
   legalQueries: number;
 }
 
+interface GrievanceChartData {
+  type: string;
+  count: number;
+}
+
 export default function Home() {
   const { t } = useTranslation();
   const [stats, setStats] = useState<DashboardStats | null>(null);
+  const [grievanceData, setGrievanceData] = useState<GrievanceChartData[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -36,9 +45,27 @@ export default function Home() {
         const thirtyDaysAgoTimestamp = Timestamp.fromDate(thirtyDaysAgo);
 
         const activeGrievancesQuery = query(grievancesRef, where("status", "!=", "resolved"));
+        const allGrievancesQuery = query(grievancesRef);
         const lastMonthGrievancesQuery = query(grievancesRef, where("createdAt", ">=", thirtyDaysAgoTimestamp));
         
-        const [activeSnapshot, lastMonthSnapshot] = await Promise.all([getDocs(activeGrievancesQuery), getDocs(lastMonthGrievancesQuery)]);
+        const [activeSnapshot, lastMonthSnapshot, allGrievancesSnapshot] = await Promise.all([
+            getDocs(activeGrievancesQuery), 
+            getDocs(lastMonthGrievancesQuery),
+            getDocs(allGrievancesQuery)
+        ]);
+
+        // Grievance chart data aggregation
+        const grievancesByType: {[key: string]: number} = {};
+        allGrievancesSnapshot.forEach(doc => {
+            const type = doc.data().type || 'Other';
+            grievancesByType[type] = (grievancesByType[type] || 0) + 1;
+        });
+        const chartData = Object.keys(grievancesByType).map(type => ({
+            type: t(type),
+            count: grievancesByType[type]
+        }));
+        setGrievanceData(chartData);
+
 
         // Funds
         const fundsSnapshot = await getDocs(fundsRef);
@@ -68,7 +95,7 @@ export default function Home() {
       }
     }
     fetchStats();
-  }, []);
+  }, [t]);
 
   const formatCurrency = (amount: number) => {
     if (amount >= 10000000) {
@@ -134,38 +161,62 @@ export default function Home() {
         </Card>
       </div>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>{t('quick_actions')}</CardTitle>
-          <CardDescription>{t('quick_actions_desc')}</CardDescription>
-        </CardHeader>
-        <CardContent className="grid gap-4 sm:grid-cols-2 md:grid-cols-3">
-          <Button asChild variant="outline">
-            <Link href="/grievance">
-              <FilePenLine className="mr-2 h-4 w-4" />
-              {t('file_grievance_button')}
-            </Link>
-          </Button>
-          <Button asChild variant="outline">
-            <Link href="/budget">
-              <Vote className="mr-2 h-4 w-4" />
-              {t('vote_budgets_button')}
-            </Link>
-          </Button>
-          <Button asChild variant="outline">
-            <Link href="/funds">
-              <Banknote className="mr-2 h-4 w-4" />
-              {t('track_funds_button')}
-            </Link>
-          </Button>
-          <Button asChild variant="outline">
-            <Link href="/legal-chatbot">
-              <Gavel className="mr-2 h-4 w-4" />
-              {t('ask_legal_button')}
-            </Link>
-          </Button>
-        </CardContent>
-      </Card>
+       <div className="grid gap-6 md:grid-cols-2">
+           <Card>
+            <CardHeader>
+              <CardTitle>{t('quick_actions')}</CardTitle>
+              <CardDescription>{t('quick_actions_desc')}</CardDescription>
+            </CardHeader>
+            <CardContent className="grid gap-4 sm:grid-cols-2">
+              <Button asChild variant="outline">
+                <Link href="/grievance">
+                  <FilePenLine className="mr-2 h-4 w-4" />
+                  {t('file_grievance_button')}
+                </Link>
+              </Button>
+              <Button asChild variant="outline">
+                <Link href="/budget">
+                  <Vote className="mr-2 h-4 w-4" />
+                  {t('vote_budgets_button')}
+                </Link>
+              </Button>
+              <Button asChild variant="outline">
+                <Link href="/funds">
+                  <Banknote className="mr-2 h-4 w-4" />
+                  {t('track_funds_button')}
+                </Link>
+              </Button>
+              <Button asChild variant="outline">
+                <Link href="/legal-chatbot">
+                  <Gavel className="mr-2 h-4 w-4" />
+                  {t('ask_legal_button')}
+                </Link>
+              </Button>
+            </CardContent>
+          </Card>
+          <Card>
+             <CardHeader>
+                <CardTitle>Grievances by Type</CardTitle>
+                <CardDescription>Distribution of submitted grievances across categories.</CardDescription>
+            </CardHeader>
+            <CardContent>
+                <ChartContainer config={{
+                    count: {
+                        label: "Count",
+                        color: "hsl(var(--primary))",
+                    },
+                }} className="h-[250px] w-full">
+                    <RechartsBarChart data={grievanceData} margin={{ top: 20, right: 20, bottom: 5, left: 0 }}>
+                        <CartesianGrid vertical={false} />
+                        <XAxis dataKey="type" tickLine={false} tickMargin={10} axisLine={false} />
+                        <YAxis />
+                        <ChartTooltip content={<ChartTooltipContent />} />
+                        <Bar dataKey="count" fill="var(--color-count)" radius={4} />
+                    </RechartsBarChart>
+                </ChartContainer>
+            </CardContent>
+          </Card>
+       </div>
     </div>
   );
 }

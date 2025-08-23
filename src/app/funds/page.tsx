@@ -11,7 +11,8 @@ import { Button } from "@/components/ui/button";
 import { ArrowUpDown, Loader2 } from "lucide-react";
 import { useTranslation } from "@/hooks/use-translation";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Input } from "@/components/ui/input";
+import { Bar, CartesianGrid, XAxis, YAxis, Legend, BarChart as RechartsBarChart } from "recharts";
+import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart";
 
 interface Fund {
   id: string;
@@ -48,6 +49,23 @@ export default function FundsPage() {
     const allDepartments = funds.map(fund => fund.department);
     return [...new Set(allDepartments)];
   }, [funds]);
+  
+  const chartData = useMemo(() => {
+    const dataByDept: { [key: string]: { allocated: number; utilized: number } } = {};
+    funds.forEach(fund => {
+        if (!dataByDept[fund.department]) {
+            dataByDept[fund.department] = { allocated: 0, utilized: 0 };
+        }
+        dataByDept[fund.department].allocated += fund.allocated;
+        dataByDept[fund.department].utilized += fund.utilized;
+    });
+    return Object.keys(dataByDept).map(dept => ({
+        department: t(dept),
+        allocated: dataByDept[dept].allocated,
+        utilized: dataByDept[dept].utilized
+    }));
+  }, [funds, t]);
+
 
   const columns: ColumnDef<Fund>[] = useMemo(() => [
     {
@@ -115,9 +133,33 @@ export default function FundsPage() {
   }
 
   return (
-    <div>
-      <h1 className="text-3xl font-bold tracking-tight text-primary">{t("funds_overview")}</h1>
-      <p className="text-muted-foreground mb-6">{t("funds_overview_desc")}</p>
+    <div className="space-y-6">
+      <header>
+        <h1 className="text-3xl font-bold tracking-tight text-primary">{t("funds_overview")}</h1>
+        <p className="text-muted-foreground">{t("funds_overview_desc")}</p>
+      </header>
+       <Card>
+        <CardHeader>
+            <CardTitle>Fund Utilization by Department</CardTitle>
+            <CardDescription>Comparison of allocated vs. utilized funds.</CardDescription>
+        </CardHeader>
+        <CardContent>
+            <ChartContainer config={{
+                allocated: { label: t('allocated_funds'), color: "hsl(var(--chart-2))" },
+                utilized: { label: t('utilized_funds'), color: "hsl(var(--chart-1))" },
+            }} className="h-[300px] w-full">
+                <RechartsBarChart data={chartData} margin={{ top: 20, right: 20, bottom: 5, left: 0 }}>
+                    <CartesianGrid vertical={false} />
+                    <XAxis dataKey="department" tickLine={false} tickMargin={10} axisLine={false} angle={-45} textAnchor="end" height={80} />
+                    <YAxis tickFormatter={(value) => `₹${Number(value) / 100000}L`} />
+                    <ChartTooltip content={<ChartTooltipContent />} />
+                    <Legend />
+                    <Bar dataKey="allocated" fill="var(--color-allocated)" radius={4} />
+                    <Bar dataKey="utilized" fill="var(--color-utilized)" radius={4} />
+                </RechartsBarChart>
+            </ChartContainer>
+        </CardContent>
+      </Card>
       <Card>
         <CardHeader>
           <CardTitle>{t("public_funds_tracker")}</CardTitle>
