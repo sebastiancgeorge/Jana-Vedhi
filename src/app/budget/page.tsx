@@ -57,7 +57,9 @@ export default function BudgetPage() {
           ? { 
               ...b, 
               votes: newVotes,
-              votedBy: hasVoted ? b.votedBy.filter(uid => uid !== user.uid) : [...b.votedBy, user.uid]
+              votedBy: hasVoted 
+                ? (b.votedBy || []).filter(uid => uid !== user.uid) 
+                : [...(b.votedBy || []), user.uid]
             } 
           : b
         )
