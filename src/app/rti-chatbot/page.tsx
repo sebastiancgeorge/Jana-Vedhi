@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useState, useRef, useEffect, type FormEvent } from "react";
+import { useState, useRef, useEffect, type FormEvent, useCallback } from "react";
 import { getRtiChatbotResponse } from "./actions";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
@@ -17,12 +17,14 @@ type Message = {
   id: string;
   text: string;
   sender: "user" | "bot";
+  translatedText?: string;
 };
 
 type ChatState = {
   currentStep: string;
   rtiDraft: string;
   isDraftComplete: boolean;
+  translatedRtiDraft?: string;
 };
 
 export default function RtiChatbotPage() {
@@ -35,7 +37,37 @@ export default function RtiChatbotPage() {
     isDraftComplete: false,
   });
   const scrollAreaRef = useRef<HTMLDivElement>(null);
-  const { t } = useTranslation();
+  const { t, language, translateDynamicText } = useTranslation();
+
+  const translateMessages = useCallback(async (msgs: Message[]) => {
+    const promises = msgs.map(async (msg) => {
+        if (msg.sender === 'bot' && !msg.translatedText) {
+            const translated = await translateDynamicText(msg.text);
+            return { ...msg, translatedText: translated };
+        }
+        return msg;
+    });
+    const newMessages = await Promise.all(promises);
+    setMessages(newMessages);
+  }, [translateDynamicText]);
+
+  const translateRtiDraft = useCallback(async (draft: string) => {
+    if (draft) {
+      const translated = await translateDynamicText(draft);
+      setChatState(prev => ({ ...prev, translatedRtiDraft: translated }));
+    }
+  }, [translateDynamicText]);
+  
+  useEffect(() => {
+    translateMessages(messages);
+  }, [language, messages, translateMessages]);
+
+  useEffect(() => {
+    if (language === 'malayalam') {
+      translateRtiDraft(chatState.rtiDraft);
+    }
+  }, [language, chatState.rtiDraft, translateRtiDraft]);
+
 
   useEffect(() => {
     // Initial message from the bot
@@ -55,6 +87,7 @@ export default function RtiChatbotPage() {
       }
     };
     fetchInitialMessage();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {
@@ -68,7 +101,10 @@ export default function RtiChatbotPage() {
 
   const handleExport = () => {
     const doc = new jsPDF();
-    doc.text(chatState.rtiDraft, 10, 10);
+    const textToExport = language === 'malayalam' && chatState.translatedRtiDraft ? chatState.translatedRtiDraft : chatState.rtiDraft;
+    // jsPDF doesn't handle Malayalam font well by default, this will likely render incorrectly without font embedding.
+    // This is a limitation of the library without extra configuration.
+    doc.text(textToExport, 10, 10);
     doc.save("rti-application.pdf");
   };
   
@@ -105,6 +141,7 @@ export default function RtiChatbotPage() {
       };
       setMessages((prev) => [...prev, botMessage]);
       setChatState({
+        ...chatState,
         currentStep: botResponse.nextStep,
         rtiDraft: botResponse.updatedDraft ?? chatState.rtiDraft,
         isDraftComplete: botResponse.isDraftComplete,
@@ -155,7 +192,7 @@ export default function RtiChatbotPage() {
                         : "bg-muted"
                     }`}
                   >
-                    <p className="text-sm whitespace-pre-wrap">{t(message.text)}</p>
+                    <p className="text-sm whitespace-pre-wrap">{language === 'malayalam' && message.translatedText ? message.translatedText : message.text}</p>
                   </div>
                   {message.sender === "user" && (
                      <Avatar className="h-9 w-9 border">
@@ -206,7 +243,7 @@ export default function RtiChatbotPage() {
         <CardContent className="flex-1">
             <Textarea
                 className="h-full resize-none"
-                value={t(chatState.rtiDraft)}
+                value={language === 'malayalam' && chatState.translatedRtiDraft ? chatState.translatedRtiDraft : chatState.rtiDraft}
                 readOnly
                 placeholder={t("rti_draft_placeholder")}
             />

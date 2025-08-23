@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useState, useRef, useEffect, type FormEvent } from "react";
+import { useState, useRef, useEffect, type FormEvent, useCallback } from "react";
 import { getLegalChatbotResponse } from "./actions";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
@@ -17,6 +17,7 @@ type Message = {
   text: string;
   sender: "user" | "bot";
   source?: string;
+  translatedText?: string;
 };
 
 export default function LegalChatbotPage() {
@@ -24,7 +25,23 @@ export default function LegalChatbotPage() {
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const scrollAreaRef = useRef<HTMLDivElement>(null);
-  const { t } = useTranslation();
+  const { t, language, translateDynamicText } = useTranslation();
+
+  const translateMessages = useCallback(async (msgs: Message[]) => {
+    const promises = msgs.map(async (msg) => {
+        if (msg.sender === 'bot' && !msg.translatedText) {
+            const translated = await translateDynamicText(msg.text);
+            return { ...msg, translatedText: translated };
+        }
+        return msg;
+    });
+    const newMessages = await Promise.all(promises);
+    setMessages(newMessages);
+  }, [translateDynamicText]);
+
+  useEffect(() => {
+    translateMessages(messages);
+  }, [language, messages, translateMessages]);
 
   useEffect(() => {
     if (scrollAreaRef.current) {
@@ -112,7 +129,7 @@ export default function LegalChatbotPage() {
                         : "bg-muted"
                     }`}
                   >
-                    <p className="text-sm whitespace-pre-wrap">{t(message.text)}</p>
+                    <p className="text-sm whitespace-pre-wrap">{language === 'malayalam' && message.translatedText ? message.translatedText : message.text}</p>
                     {message.source && (
                       <Badge variant="secondary" className="mt-2">
                         <Files className="mr-1 h-3 w-3" />

@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useState, useRef, useEffect, type FormEvent } from "react";
+import { useState, useRef, useEffect, type FormEvent, useCallback } from "react";
 import { getGeneralChatbotResponse } from "./actions";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
@@ -17,6 +17,7 @@ type Message = {
   text: string;
   sender: "user" | "bot";
   links?: string[];
+  translatedText?: string;
 };
 
 export default function GeneralChatbotPage() {
@@ -24,7 +25,24 @@ export default function GeneralChatbotPage() {
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const scrollAreaRef = useRef<HTMLDivElement>(null);
-  const { t } = useTranslation();
+  const { t, translateDynamicText, language } = useTranslation();
+
+  const translateMessages = useCallback(async (msgs: Message[]) => {
+    const promises = msgs.map(async (msg) => {
+        if (msg.sender === 'bot' && !msg.translatedText) {
+            const translated = await translateDynamicText(msg.text);
+            return { ...msg, translatedText: translated };
+        }
+        return msg;
+    });
+    const newMessages = await Promise.all(promises);
+    setMessages(newMessages);
+  }, [translateDynamicText]);
+
+  useEffect(() => {
+    translateMessages(messages);
+  }, [language, messages, translateMessages]);
+
 
   useEffect(() => {
     if (scrollAreaRef.current) {
@@ -70,9 +88,9 @@ export default function GeneralChatbotPage() {
     }
   };
 
-  const renderMessageText = (text: string) => {
-    const translatedText = t(text);
-    const parts = translatedText.split(/(\[.*?\]\(.*?\))/g);
+  const renderMessageText = (text: string, translatedText?: string) => {
+    const textToRender = language === 'malayalam' && translatedText ? translatedText : text;
+    const parts = textToRender.split(/(\[.*?\]\(.*?\))/g);
     return parts.map((part, index) => {
       const match = part.match(/\[(.*?)\]\((.*?)\)/);
       if (match) {
@@ -128,7 +146,7 @@ export default function GeneralChatbotPage() {
                         : "bg-muted"
                     }`}
                   >
-                    <div className="text-sm whitespace-pre-wrap">{renderMessageText(message.text)}</div>
+                    <div className="text-sm whitespace-pre-wrap">{renderMessageText(message.text, message.translatedText)}</div>
                   </div>
                   {message.sender === "user" && (
                      <Avatar className="h-9 w-9 border">
