@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState, useRef, useEffect, type FormEvent } from "react";
@@ -9,6 +10,7 @@ import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Bot, Gavel, Send, User, Files } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import { useTranslation } from "@/hooks/use-translation";
 
 type Message = {
   id: string;
@@ -22,6 +24,7 @@ export default function LegalChatbotPage() {
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const scrollAreaRef = useRef<HTMLDivElement>(null);
+  const { t } = useTranslation();
 
   useEffect(() => {
     if (scrollAreaRef.current) {
@@ -74,9 +77,9 @@ export default function LegalChatbotPage() {
           <div className="flex items-center gap-3">
             <Gavel className="h-6 w-6 text-primary" />
             <div>
-              <CardTitle>Legal Chatbot</CardTitle>
+              <CardTitle>{t("legal_chatbot")}</CardTitle>
               <CardDescription>
-                Ask legal questions. Get answers from our legal FAQ or AI.
+                {t("legal_chatbot_desc")}
               </CardDescription>
             </div>
           </div>
@@ -87,7 +90,7 @@ export default function LegalChatbotPage() {
               {messages.length === 0 && (
                 <div className="text-center text-muted-foreground">
                   <Gavel className="mx-auto h-12 w-12 mb-4" />
-                  <p>Ask a question to get started, e.g., "How do I file a property tax appeal?"</p>
+                  <p>{t("legal_chatbot_placeholder")}</p>
                 </div>
               )}
               {messages.map((message) => (
@@ -109,11 +112,11 @@ export default function LegalChatbotPage() {
                         : "bg-muted"
                     }`}
                   >
-                    <p className="text-sm whitespace-pre-wrap">{message.text}</p>
+                    <p className="text-sm whitespace-pre-wrap">{t(message.text)}</p>
                     {message.source && (
                       <Badge variant="secondary" className="mt-2">
                         <Files className="mr-1 h-3 w-3" />
-                        Source: {message.source}
+                        {t("source")}: {t(message.source)}
                       </Badge>
                     )}
                   </div>
@@ -146,13 +149,13 @@ export default function LegalChatbotPage() {
             <Input
               value={input}
               onChange={(e) => setInput(e.target.value)}
-              placeholder="Type your legal question here..."
+              placeholder={t("legal_chatbot_input_placeholder")}
               disabled={isLoading}
               autoComplete="off"
             />
             <Button type="submit" disabled={isLoading || !input.trim()}>
               <Send className="h-4 w-4" />
-              <span className="sr-only">Send</span>
+              <span className="sr-only">{t("send")}</span>
             </Button>
           </form>
         </CardFooter>

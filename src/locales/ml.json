@@ -165,5 +165,19 @@
   "Politician Tracker": "രാഷ്ട്രീയക്കാരെ നിരീക്ഷിക്കുക",
   "Legal Chatbot": "നിയമ ചാറ്റ്ബോട്ട്",
   "RTI Chatbot": "RTI ചാറ്റ്ബോട്ട്",
-  "Notifications": "അറിയിപ്പുകൾ"
+  "Notifications": "അറിയിപ്പുകൾ",
+  "legal_chatbot_desc": "നിയമപരമായ ചോദ്യങ്ങൾ ചോദിക്കുക. ഞങ്ങളുടെ നിയമ FAQ-ൽ നിന്നോ AI-ൽ നിന്നോ ഉത്തരം നേടുക.",
+  "legal_chatbot_placeholder": "ഒരു ചോദ്യം ചോദിച്ച് തുടങ്ങുക, ഉദാ: \"ഒരു പ്രോപ്പർട്ടി ടാക്സ് അപ്പീൽ എങ്ങനെ ഫയൽ ചെയ്യാം?\"",
+  "legal_chatbot_input_placeholder": "നിങ്ങളുടെ നിയമപരമായ ചോദ്യം ഇവിടെ ടൈപ്പ് ചെയ്യുക...",
+  "source": "ഉറവിടം",
+  "Legal FAQ": "നിയമപരമായ പതിവ് ചോദ്യങ്ങൾ",
+  "To start a business in Kerala, you need to register your business with the relevant authorities, obtain the necessary licenses and permits, and comply with the applicable laws and regulations.": "കേരളത്തിൽ ഒരു ബിസിനസ്സ് ആരംഭിക്കുന്നതിന്, നിങ്ങളുടെ ബിസിനസ്സ് ബന്ധപ്പെട്ട അധികാരികളിൽ രജിസ്റ്റർ ചെയ്യുകയും ആവശ്യമായ ലൈസൻസുകളും പെർമിറ്റുകളും നേടുകയും ബാധകമായ നിയമങ്ങളും നിയന്ത്രണങ്ങളും പാലിക്കുകയും വേണം.",
+  "You can file a property tax appeal by submitting a written request to the local municipal office within the specified time frame.": "നിശ്ചിത സമയപരിധിക്കുള്ളിൽ പ്രാദേശിക മുനിസിപ്പൽ ഓഫീസിൽ രേഖാമൂലം അപേക്ഷ സമർപ്പിച്ച് നിങ്ങൾക്ക് പ്രോപ്പർട്ടി ടാക്സ് അപ്പീൽ ഫയൽ ചെയ്യാം.",
+  "To obtain a building permit, you need to submit a detailed building plan, along with the required documents, to the local building authority.": "ഒരു കെട്ടിട നിർമ്മാണ അനുമതി ലഭിക്കുന്നതിന്, നിങ്ങൾ ആവശ്യമായ രേഖകളോടൊപ്പം വിശദമായ കെട്ടിട പ്ലാൻ പ്രാദേശിക കെട്ടിട നിർമ്മാണ അതോറിറ്റിക്ക് സമർപ്പിക്കേണ്ടതുണ്ട്.",
+  "Hello! I am the RTI Drafting Assistant. I will guide you through the process of drafting an RTI application step-by-step. First, please tell me the specific Information Authority or department you want to address the RTI to.": "നമസ്കാരം! ഞാൻ RTI ഡ്രാഫ്റ്റിംഗ് അസിസ്റ്റൻ്റ് ആണ്. ഒരു RTI അപേക്ഷ തയ്യാറാക്കുന്ന പ്രക്രിയയിൽ ഞാൻ നിങ്ങളെ ഘട്ടം ഘട്ടമായി നയിക്കും. ആദ്യം, നിങ്ങൾ RTI അപേക്ഷ നൽകാൻ ആഗ്രഹിക്കുന്ന നിർദ്ദിഷ്‌ട ഇൻഫർമേഷൻ അതോറിറ്റിയുടെയോ വകുപ്പിന്റെയോ പേര് ദയവായി പറയുക.",
+  "Thank you. Now, please specify the subject matter or topic of the information you are seeking.": "നന്ദി. ഇപ്പോൾ, നിങ്ങൾ അന്വേഷിക്കുന്ന വിവരങ്ങളുടെ വിഷയമോ സംഗതിയോ വ്യക്തമാക്കുക.",
+  "Great. Now, please list specific, clear, and concise questions related to the subject matter. Being specific helps avoid ambiguity.": "വളരെ നല്ലത്. ഇനി, വിഷയവുമായി ബന്ധപ്പെട്ട വ്യക്തവും സംക്ഷിപ്തവുമായ ചോദ്യങ്ങൾ പട്ടികപ്പെടുത്തുക. വ്യക്തത നൽകുന്നത് അവ്യക്തത ഒഴിവാക്കാൻ സഹായിക്കുന്നു.",
+  "Understood. Do you have any supporting documents or information that might be relevant to your request? If so, please describe them or paste the text here.": "മനസ്സിലായി. നിങ്ങളുടെ അഭ്യർത്ഥനയുമായി ബന്ധപ്പെട്ട എന്തെങ്കിലും സഹായകമായ രേഖകളോ വിവരങ്ങളോ നിങ്ങളുടെ പക്കലുണ്ടോ? ഉണ്ടെങ്കിൽ, ദയവായി അവയെക്കുറിച്ച് വിവരിക്കുകയോ അല്ലെങ്കിൽ ടെക്സ്റ്റ് ഇവിടെ ഒട്ടിക്കുകയോ ചെയ്യുക.",
+  "Here is a draft of your RTI application for your review. Please read it carefully and let me know if you want to make any changes. If you are satisfied, just say 'finalize'.": "നിങ്ങളുടെ RTI അപേക്ഷയുടെ ഒരു കരട് രൂപം ഇതാ. ദയവായി ഇത് ശ്രദ്ധാപൂർവ്വം വായിച്ച് എന്തെങ്കിലും മാറ്റങ്ങൾ വരുത്തണമെന്നുണ്ടെങ്കിൽ എന്നെ അറിയിക്കുക. നിങ്ങൾ തൃപ്തനാണെങ്കിൽ, 'അന്തിമമാക്കുക' എന്ന് പറയുക.",
+  "Your RTI application has been finalized. You can now export it as a PDF or save the draft for later use.": "നിങ്ങളുടെ വിവരാവകാശ അപേക്ഷ അന്തിമമാക്കിയിരിക്കുന്നു. നിങ്ങൾക്ക് ഇപ്പോൾ ഇത് PDF ആയി എക്‌സ്‌പോർട്ടുചെയ്യാനോ അല്ലെങ്കിൽ പിന്നീട് ഉപയോഗിക്കുന്നതിനായി ഡ്രാഫ്റ്റ് സേവ് ചെയ്യാനോ കഴിയും."
 }

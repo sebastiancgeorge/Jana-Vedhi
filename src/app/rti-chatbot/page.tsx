@@ -47,7 +47,7 @@ export default function RtiChatbotPage() {
           userInput: "",
         });
         setMessages([{ id: "init", text: initialResponse.response, sender: "bot" }]);
-        setChatState(prev => ({ ...prev, nextStep: initialResponse.nextStep }));
+        setChatState(prev => ({ ...prev, currentStep: initialResponse.nextStep }));
       } catch (error) {
         setMessages([{ id: "init-error", text: "Error starting chat.", sender: "bot" }]);
       } finally {

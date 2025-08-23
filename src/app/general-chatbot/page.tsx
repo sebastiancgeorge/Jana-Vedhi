@@ -71,7 +71,8 @@ export default function GeneralChatbotPage() {
   };
 
   const renderMessageText = (text: string) => {
-    const parts = text.split(/(\[.*?\]\(.*?\))/g);
+    const translatedText = t(text);
+    const parts = translatedText.split(/(\[.*?\]\(.*?\))/g);
     return parts.map((part, index) => {
       const match = part.match(/\[(.*?)\]\((.*?)\)/);
       if (match) {
@@ -83,7 +84,7 @@ export default function GeneralChatbotPage() {
           </Link>
         );
       }
-      return <span key={index}>{t(part)}</span>;
+      return <span key={index}>{part}</span>;
     });
   }
 

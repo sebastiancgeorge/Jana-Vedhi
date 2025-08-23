@@ -165,5 +165,10 @@
   "Politician Tracker": "Politician Tracker",
   "Legal Chatbot": "Legal Chatbot",
   "RTI Chatbot": "RTI Chatbot",
-  "Notifications": "Notifications"
+  "Notifications": "Notifications",
+  "legal_chatbot_desc": "Ask legal questions. Get answers from our legal FAQ or AI.",
+  "legal_chatbot_placeholder": "Ask a question to get started, e.g., \"How do I file a property tax appeal?\"",
+  "legal_chatbot_input_placeholder": "Type your legal question here...",
+  "source": "Source",
+  "Legal FAQ": "Legal FAQ"
 }
