@@ -37,7 +37,7 @@ export function KeralaMap({ points }: KeralaMapProps) {
     <div className="relative" style={{ width: MAP_WIDTH, height: MAP_HEIGHT }}>
       <TooltipProvider>
         <Image
-          src="https://www.mapsofindia.com/maps/kerala/kerala-map.jpg"
+          src="https://placehold.co/500x800.png"
           alt="Map of Kerala"
           width={MAP_WIDTH}
           height={MAP_HEIGHT}

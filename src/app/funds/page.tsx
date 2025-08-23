@@ -8,11 +8,12 @@ import { collection, getDocs } from "firebase/firestore";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
-import { ArrowUpDown, Loader2 } from "lucide-react";
+import { ArrowUpDown, Loader2, MessageSquare } from "lucide-react";
 import { useTranslation } from "@/hooks/use-translation";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Bar, CartesianGrid, XAxis, YAxis, Legend, BarChart as RechartsBarChart, PieChart as RechartsPieChart, Pie, Cell } from "recharts";
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart";
+import Link from "next/link";
 
 interface Fund {
   id: string;
@@ -128,6 +129,17 @@ export default function FundsPage() {
         const amount = parseFloat(row.getValue("utilized"));
         return <div className="text-right font-medium">{new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR' }).format(amount)}</div>;
       },
+    },
+     {
+      id: "actions",
+      cell: ({ row }) => (
+        <Button asChild variant="ghost" size="sm">
+            <Link href={`/forum`}>
+                <MessageSquare className="mr-2 h-4 w-4" />
+                {t('discuss')}
+            </Link>
+        </Button>
+      ),
     },
   ], [t]);
 
