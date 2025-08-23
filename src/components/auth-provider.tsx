@@ -41,13 +41,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setLoading(true);
       if (user) {
         setUser(user);
-        // Fetch user role from Firestore
+        // Always fetch user role from Firestore as the source of truth
         const userDocRef = doc(db, "users", user.uid);
         const userDoc = await getDoc(userDocRef);
         if (userDoc.exists()) {
           setUserRole(userDoc.data().role || 'citizen');
         } else {
-          // Handle case where user exists in Auth but not in Firestore
+          // This might happen if a user is created in Auth but their Firestore doc fails to write
+          // or during the brief moment after sign-up before the doc is created.
+          // Defaulting to 'citizen' is a safe fallback.
           setUserRole('citizen');
         }
       } else {
@@ -89,16 +91,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const userCredential = await createUserWithEmailAndPassword(auth, email, pass);
       const newUser = userCredential.user;
 
-      const role: UserRole = email === 'admin@example.gov' ? 'admin' : 'citizen';
+      // Upon sign-up, all users are citizens. Admin role must be set manually in Firestore
+      // or through a secure admin panel. This prevents anyone from signing up as an admin.
+      const role: UserRole = 'citizen';
 
       // Create a document in Firestore 'users' collection
       await setDoc(doc(db, "users", newUser.uid), {
         email: newUser.email,
         aadhaar: aadhaar,
-        role: role,
+        role: role, // Default role is 'citizen'
         aadhaarVerified: true,
         createdAt: new Date(),
       });
+      
+      setUserRole(role);
 
       router.push("/");
       toast({
