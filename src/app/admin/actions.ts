@@ -31,7 +31,21 @@ export interface Grievance {
     status: GrievanceStatus;
     type: string;
     userId: string;
-    createdAt: Timestamp; // Correctly type the Firestore Timestamp
+    createdAt: number; // Changed from Timestamp to number
+}
+
+// Helper to convert Firestore data to Grievance, serializing timestamp
+function toGrievance(doc: any): Grievance {
+    const data = doc.data();
+    return {
+        id: doc.id,
+        title: data.title,
+        description: data.description,
+        status: data.status,
+        type: data.type,
+        userId: data.userId,
+        createdAt: data.createdAt.toMillis(),
+    } as Grievance;
 }
 
 
@@ -39,9 +53,7 @@ export async function getGrievances(): Promise<Grievance[]> {
     try {
         const grievancesCol = collection(db, "grievances");
         const snapshot = await getDocs(grievancesCol);
-         // The data is already serializable as long as we type it correctly.
-         // Next.js handles the conversion of Timestamps automatically if they are typed.
-        return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Grievance));
+        return snapshot.docs.map(toGrievance);
     } catch (error) {
         console.error("Error fetching grievances:", error);
         throw new Error("Failed to fetch grievances.");

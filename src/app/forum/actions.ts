@@ -24,10 +24,10 @@ export interface Topic {
   content: string;
   userId: string;
   userName: string;
-  createdAt: Timestamp;
+  createdAt: number; // Changed from Timestamp
   lastReply?: {
       userName: string;
-      createdAt: Timestamp;
+      createdAt: number; // Changed from Timestamp
   }
 }
 
@@ -36,7 +36,7 @@ export interface Reply {
   content: string;
   userId: string;
   userName: string;
-  createdAt: Timestamp;
+  createdAt: number; // Changed from Timestamp
 }
 
 // Zod schemas for input validation
@@ -55,6 +55,38 @@ const ReplySchema = z.object({
 });
 export type ReplyInput = z.infer<typeof ReplySchema>;
 
+// Helper function to convert Firestore doc to Topic
+const toTopic = (doc: any): Topic => {
+    const data = doc.data();
+    const topic: Topic = {
+        id: doc.id,
+        title: data.title,
+        content: data.content,
+        userId: data.userId,
+        userName: data.userName,
+        createdAt: data.createdAt.toMillis(),
+    };
+    if (data.lastReply) {
+        topic.lastReply = {
+            userName: data.lastReply.userName,
+            createdAt: data.lastReply.createdAt.toMillis(),
+        };
+    }
+    return topic;
+}
+
+// Helper function to convert Firestore doc to Reply
+const toReply = (doc: any): Reply => {
+    const data = doc.data();
+    return {
+        id: doc.id,
+        content: data.content,
+        userId: data.userId,
+        userName: data.userName,
+        createdAt: data.createdAt.toMillis(),
+    };
+}
+
 
 // Server Actions
 export async function getTopics(): Promise<Topic[]> {
@@ -64,7 +96,7 @@ export async function getTopics(): Promise<Topic[]> {
     // The more complex sorting (by last reply) will be handled on the client.
     const q = query(topicsCol, orderBy("createdAt", "desc"));
     const snapshot = await getDocs(q);
-    return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Topic));
+    return snapshot.docs.map(toTopic);
   } catch (error) {
     console.error("Error fetching topics:", error);
     throw new Error("Failed to fetch topics.");
@@ -96,7 +128,7 @@ export async function getTopic(topicId: string): Promise<Topic | null> {
         const topicRef = doc(db, "topics", topicId);
         const docSnap = await getDoc(topicRef);
         if (docSnap.exists()) {
-            return { id: docSnap.id, ...docSnap.data() } as Topic;
+            return toTopic(docSnap);
         }
         return null;
     } catch (error) {
@@ -110,7 +142,7 @@ export async function getReplies(topicId: string): Promise<Reply[]> {
         const repliesCol = collection(db, "topics", topicId, "replies");
         const q = query(repliesCol, orderBy("createdAt", "asc"));
         const snapshot = await getDocs(q);
-        return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Reply));
+        return snapshot.docs.map(toReply);
     } catch (error) {
         console.error("Error fetching replies:", error);
         throw new Error("Failed to fetch replies.");

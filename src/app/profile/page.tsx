@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useEffect, useState } from "react";
@@ -107,7 +108,7 @@ export default function ProfilePage() {
                   </AccordionTrigger>
                   <AccordionContent>
                     <p className="text-muted-foreground">{t(g.description)}</p>
-                    <p className="text-xs text-muted-foreground mt-2">{t("submitted_on")}: {new Date(g.createdAt.seconds * 1000).toLocaleDateString()}</p>
+                    <p className="text-xs text-muted-foreground mt-2">{t("submitted_on")}: {new Date(g.createdAt).toLocaleDateString()}</p>
                   </AccordionContent>
                 </AccordionItem>
               ))}

@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useEffect, useState } from "react";
@@ -101,7 +102,7 @@ export default function TopicPage({ params }: { params: { topicId: string } }) {
             </div>
             <div className="flex items-center gap-2">
                 <Calendar className="h-4 w-4" />
-                <span>{new Date(topic.createdAt.seconds * 1000).toLocaleDateString()}</span>
+                <span>{new Date(topic.createdAt).toLocaleDateString()}</span>
             </div>
           </div>
         </CardHeader>
@@ -123,7 +124,7 @@ export default function TopicPage({ params }: { params: { topicId: string } }) {
                         <Avatar className="h-6 w-6"><AvatarFallback>{reply.userName?.charAt(0) ?? 'A'}</AvatarFallback></Avatar>
                         <span>{reply.userName}</span>
                     </div>
-                    <span>{new Date(reply.createdAt.seconds * 1000).toLocaleString()}</span>
+                    <span>{new Date(reply.createdAt).toLocaleString()}</span>
                 </div>
                 <p className="whitespace-pre-wrap">{reply.content}</p>
               </CardContent>

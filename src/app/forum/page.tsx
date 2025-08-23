@@ -35,8 +35,8 @@ export default function ForumPage() {
         const fetchedTopics = await getTopics();
         // Sort topics client-side to ensure topics without replies are shown correctly.
         const sortedTopics = fetchedTopics.sort((a, b) => {
-            const timeA = a.lastReply ? a.lastReply.createdAt.toMillis() : a.createdAt.toMillis();
-            const timeB = b.lastReply ? b.lastReply.createdAt.toMillis() : b.createdAt.toMillis();
+            const timeA = a.lastReply ? a.lastReply.createdAt : a.createdAt;
+            const timeB = b.lastReply ? b.lastReply.createdAt : b.createdAt;
             return timeB - timeA;
         });
         setTopics(sortedTopics);
@@ -99,7 +99,7 @@ export default function ForumPage() {
                                 </div>
                                  <div className="flex items-center gap-2">
                                     <Calendar className="h-4 w-4" />
-                                    <span><TimeAgo date={new Date(topic.createdAt.seconds * 1000)} /></span>
+                                    <span><TimeAgo date={new Date(topic.createdAt)} /></span>
                                 </div>
                             </div>
                         </div>
@@ -109,7 +109,7 @@ export default function ForumPage() {
                                     <Reply className="h-4 w-4"/>
                                     <div>
                                         <p className="font-semibold text-foreground truncate">{topic.lastReply.userName}</p>
-                                        <p><TimeAgo date={new Date(topic.lastReply.createdAt.seconds * 1000)} /></p>
+                                        <p><TimeAgo date={new Date(topic.lastReply.createdAt)} /></p>
                                     </div>
                                 </div>
                            ) : (

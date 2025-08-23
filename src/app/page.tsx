@@ -53,17 +53,22 @@ export default function Home() {
         // Grievances
         const thirtyDaysAgo = new Date();
         thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
-        const thirtyDaysAgoTimestamp = Timestamp.fromDate(thirtyDaysAgo);
-
+        
         const activeGrievancesQuery = query(grievancesRef, where("status", "!=", "resolved"));
         const allGrievancesQuery = query(grievancesRef);
-        const lastMonthGrievancesQuery = query(grievancesRef, where("createdAt", ">=", thirtyDaysAgoTimestamp));
+        // Note: Firestore does not support inequality checks on different fields in the same query.
+        // We will fetch all grievances and filter for the last month on the client-side for simplicity.
+        // For large datasets, a more optimized query or data structure would be needed.
         
-        const [activeSnapshot, lastMonthSnapshot, allGrievancesSnapshot] = await Promise.all([
+        const [activeSnapshot, allGrievancesSnapshot] = await Promise.all([
             getDocs(activeGrievancesQuery), 
-            getDocs(lastMonthGrievancesQuery),
             getDocs(allGrievancesQuery)
         ]);
+
+        const lastMonthGrievances = allGrievancesSnapshot.docs.filter(doc => {
+            const createdAt = doc.data().createdAt as Timestamp;
+            return createdAt.toDate() > thirtyDaysAgo;
+        });
 
         // Grievance chart data aggregation
         const grievancesByType: {[key: string]: number} = {};
@@ -107,7 +112,7 @@ export default function Home() {
 
         setStats({
           activeGrievances: activeSnapshot.size,
-          grievanceChange: lastMonthSnapshot.size,
+          grievanceChange: lastMonthGrievances.length,
           fundsUtilized: totalUtilized,
           projectCount: fundsSnapshot.size,
           ongoingVotes: ongoingVotesSnapshot.size,
