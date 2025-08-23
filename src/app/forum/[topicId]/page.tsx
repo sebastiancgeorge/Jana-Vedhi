@@ -34,8 +34,7 @@ export default function TopicPage({ params }: { params: { topicId: string } }) {
     defaultValues: { content: "" },
   });
 
-  useEffect(() => {
-    const fetchTopicAndReplies = async () => {
+  const fetchTopicAndReplies = async () => {
       try {
         setLoading(true);
         const [topicData, repliesData] = await Promise.all([
@@ -54,7 +53,10 @@ export default function TopicPage({ params }: { params: { topicId: string } }) {
         setLoading(false);
       }
     };
+
+  useEffect(() => {
     fetchTopicAndReplies();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [topicId, toast]);
 
   const onSubmit = async (data: z.infer<typeof ReplySchema>) => {
@@ -67,9 +69,8 @@ export default function TopicPage({ params }: { params: { topicId: string } }) {
       });
       toast({ title: t("reply_posted_successfully") });
       form.reset();
-      // Refetch replies
-      const repliesData = await getReplies(topicId);
-      setReplies(repliesData);
+      // Refetch replies and topic (to update last reply)
+      fetchTopicAndReplies();
     } catch (error) {
       toast({
         variant: "destructive",
@@ -95,7 +96,7 @@ export default function TopicPage({ params }: { params: { topicId: string } }) {
           <CardTitle className="text-3xl">{topic.title}</CardTitle>
           <div className="flex items-center gap-4 text-sm text-muted-foreground pt-2">
             <div className="flex items-center gap-2">
-                <Avatar className="h-6 w-6"><AvatarFallback>{topic.userName.charAt(0)}</AvatarFallback></Avatar>
+                <Avatar className="h-6 w-6"><AvatarFallback>{topic.userName?.charAt(0) ?? 'A'}</AvatarFallback></Avatar>
                 <span>{t('by')} {topic.userName}</span>
             </div>
             <div className="flex items-center gap-2">
@@ -119,7 +120,7 @@ export default function TopicPage({ params }: { params: { topicId: string } }) {
               <CardContent className="p-4">
                  <div className="flex items-center gap-4 text-sm text-muted-foreground mb-2">
                     <div className="flex items-center gap-2 font-semibold text-foreground">
-                        <Avatar className="h-6 w-6"><AvatarFallback>{reply.userName.charAt(0)}</AvatarFallback></Avatar>
+                        <Avatar className="h-6 w-6"><AvatarFallback>{reply.userName?.charAt(0) ?? 'A'}</AvatarFallback></Avatar>
                         <span>{reply.userName}</span>
                     </div>
                     <span>{new Date(reply.createdAt.seconds * 1000).toLocaleString()}</span>
@@ -166,5 +167,3 @@ export default function TopicPage({ params }: { params: { topicId: string } }) {
     </div>
   );
 }
-
-    

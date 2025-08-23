@@ -6,9 +6,20 @@ import { useToast } from "@/hooks/use-toast";
 import { useTranslation } from "@/hooks/use-translation";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Loader2, PlusCircle, User, Calendar } from "lucide-react";
+import { Loader2, PlusCircle, User, Calendar, MessageSquare, Reply } from "lucide-react";
 import Link from "next/link";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { formatDistanceToNow } from 'date-fns';
+
+function TimeAgo({ date }: { date: Date | undefined }) {
+    if (!date) return null;
+    try {
+        return formatDistanceToNow(date, { addSuffix: true });
+    } catch (error) {
+        return date.toLocaleDateString();
+    }
+}
+
 
 export default function ForumPage() {
   const [topics, setTopics] = useState<Topic[]>([]);
@@ -63,27 +74,54 @@ export default function ForumPage() {
           <div className="divide-y divide-border">
             {topics.length > 0 ? (
               topics.map((topic) => (
-                <Link key={topic.id} href={`/forum/${topic.id}`} className="block hover:bg-muted/50 transition-colors">
-                  <div className="p-6">
-                    <h3 className="text-lg font-semibold text-primary mb-2">{topic.title}</h3>
-                    <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                        <div className="flex items-center gap-2">
-                           <Avatar className="h-6 w-6">
-                             <AvatarFallback>{topic.userName.charAt(0)}</AvatarFallback>
-                           </Avatar>
-                           <span>{t('by')} {topic.userName}</span>
+                <div key={topic.id} className="p-4 sm:p-6 hover:bg-muted/50 transition-colors">
+                    <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between">
+                        <div className="flex-grow">
+                             <Link href={`/forum/${topic.id}`} className="block">
+                                <h3 className="text-lg font-semibold text-primary mb-1">{topic.title}</h3>
+                             </Link>
+                            <p className="text-sm text-muted-foreground line-clamp-2 mb-2">
+                                {topic.content}
+                            </p>
+                            <div className="flex items-center gap-4 text-xs text-muted-foreground">
+                                <div className="flex items-center gap-2">
+                                   <Avatar className="h-5 w-5">
+                                     <AvatarFallback>{topic.userName.charAt(0)}</AvatarFallback>
+                                   </Avatar>
+                                   <span>{t('by')} {topic.userName}</span>
+                                </div>
+                                 <div className="flex items-center gap-2">
+                                    <Calendar className="h-4 w-4" />
+                                    <span><TimeAgo date={new Date(topic.createdAt.seconds * 1000)} /></span>
+                                </div>
+                            </div>
                         </div>
-                         <div className="flex items-center gap-2">
-                            <Calendar className="h-4 w-4" />
-                            <span>{new Date(topic.createdAt.seconds * 1000).toLocaleDateString()}</span>
+                        <div className="flex-shrink-0 mt-4 sm:mt-0 sm:ml-6 sm:w-48 text-left sm:text-right">
+                           {topic.lastReply ? (
+                                <div className="flex items-center justify-start sm:justify-end gap-2 text-xs text-muted-foreground">
+                                    <Reply className="h-4 w-4"/>
+                                    <div>
+                                        <p className="font-semibold text-foreground truncate">{topic.lastReply.userName}</p>
+                                        <p><TimeAgo date={new Date(topic.lastReply.createdAt.seconds * 1000)} /></p>
+                                    </div>
+                                </div>
+                           ) : (
+                                <div className="text-xs text-muted-foreground italic">No replies yet</div>
+                           )}
                         </div>
                     </div>
-                  </div>
-                </Link>
+                 </div>
               ))
             ) : (
               <div className="p-12 text-center text-muted-foreground">
+                <MessageSquare className="mx-auto h-12 w-12 mb-4" />
                 <p>{t("no_topics_found")}</p>
+                <Button asChild size="sm" className="mt-4">
+                    <Link href="/forum/new">
+                        <PlusCircle className="mr-2 h-4 w-4"/>
+                        {t("start_new_discussion")}
+                    </Link>
+                </Button>
               </div>
             )}
           </div>
@@ -92,5 +130,3 @@ export default function ForumPage() {
     </div>
   );
 }
-
-    

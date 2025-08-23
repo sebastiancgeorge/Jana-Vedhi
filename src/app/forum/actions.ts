@@ -11,6 +11,7 @@ import {
   query,
   orderBy,
   Timestamp,
+  updateDoc,
 } from "firebase/firestore";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
@@ -23,6 +24,10 @@ export interface Topic {
   userId: string;
   userName: string;
   createdAt: Timestamp;
+  lastReply?: {
+      userName: string;
+      createdAt: Timestamp;
+  }
 }
 
 export interface Reply {
@@ -54,7 +59,8 @@ export type ReplyInput = z.infer<typeof ReplySchema>;
 export async function getTopics(): Promise<Topic[]> {
   try {
     const topicsCol = collection(db, "topics");
-    const q = query(topicsCol, orderBy("createdAt", "desc"));
+    // Order by last reply time, then by creation time for topics with no replies
+    const q = query(topicsCol, orderBy("lastReply.createdAt", "desc"), orderBy("createdAt", "desc"));
     const snapshot = await getDocs(q);
     return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Topic));
   } catch (error) {
@@ -116,11 +122,26 @@ export async function addReply(topicId: string, reply: ReplyInput) {
     }
 
     try {
+        const topicRef = doc(db, "topics", topicId);
         const repliesCol = collection(db, "topics", topicId, "replies");
+        
+        const replyTimestamp = serverTimestamp();
+
+        // Add the new reply
         await addDoc(repliesCol, {
             ...parsed.data,
-            createdAt: serverTimestamp(),
+            createdAt: replyTimestamp,
         });
+
+        // Update the lastReply field on the parent topic
+        await updateDoc(topicRef, {
+            lastReply: {
+                userName: parsed.data.userName,
+                createdAt: replyTimestamp
+            }
+        });
+
+        revalidatePath(`/forum`);
         revalidatePath(`/forum/${topicId}`);
         return { success: true };
     } catch (error) {
@@ -129,5 +150,3 @@ export async function addReply(topicId: string, reply: ReplyInput) {
         throw new Error(`Failed to add reply: ${msg}`);
     }
 }
-
-    

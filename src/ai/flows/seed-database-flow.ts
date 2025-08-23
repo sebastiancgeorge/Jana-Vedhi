@@ -132,29 +132,51 @@ async function seedDatabaseLogic(): Promise<SeedDatabaseOutput> {
   
   // Sample Forum Topics Data
   const topicsData = [
-    { id: 'topic1', title: 'Discussion on Waste Management System Upgrade', content: 'What are your thoughts on the new proposal for waste management? Do you think the new bins and trucks will solve the current issues?', userId: 'admin@example.gov', userName: 'Admin User', createdAt: new Date(new Date().setDate(new Date().getDate() - 5))},
-    { id: 'topic2', title: 'Ideas for Park Renovation in Ward 5', content: 'The budget for renovating the park in Ward 5 is open for voting. What kind of new equipment or facilities would you like to see?', userId: 'user1', userName: 'Suresh Kumar', createdAt: new Date(new Date().setDate(new Date().getDate() - 2))},
-    { id: 'topic3', title: 'Improving Public Transportation', content: 'The bus service has been very unreliable lately. What can be done to improve the situation? Let\'s discuss some potential solutions.', userId: 'user2', userName: 'Anitha Raj', createdAt: new Date(new Date().setDate(new Date().getDate() - 1))},
+    { id: 'topic1', title: 'Discussion on Waste Management System Upgrade', content: 'What are your thoughts on the new proposal for waste management? Do you think the new bins and trucks will solve the current issues?', userId: 'admin@example.gov', userName: 'Admin User', createdAt: new Date(new Date().setDate(new Date().getDate() - 10))},
+    { id: 'topic2', title: 'Ideas for Park Renovation in Ward 5', content: 'The budget for renovating the park in Ward 5 is open for voting. What kind of new equipment or facilities would you like to see?', userId: 'user1', userName: 'Suresh Kumar', createdAt: new Date(new Date().setDate(new Date().getDate() - 8))},
+    { id: 'topic3', title: 'Improving Public Transportation', content: 'The bus service has been very unreliable lately. What can be done to improve the situation? Let\'s discuss some potential solutions.', userId: 'user2', userName: 'Anitha Raj', createdAt: new Date(new Date().setDate(new Date().getDate() - 5))},
+    { id: 'topic4', title: 'Concerns about the new flyover at Kazhakootam', content: 'The new flyover project seems to be causing a lot of traffic disruption. Is there a better way to manage this? Also, what about the environmental impact?', userId: 'user6', userName: 'Deepa Krishnan', createdAt: new Date(new Date().setDate(new Date().getDate() - 3))},
+    { id: 'topic5', title: 'Stray dog menace in the city', content: 'The number of stray dogs has increased significantly. It\'s becoming a safety issue, especially for children. What can the authorities do?', userId: 'user7', userName: 'Vinod Pillai', createdAt: new Date(new Date().setDate(new Date().getDate() - 1))},
   ];
 
   const topicsCol = collection(db, 'topics');
+  
+  const lastReplies = new Map<string, {userName: string, createdAt: Date}>();
+
+  // Topic 1
+  const reply1_1 = { content: 'This is a much-needed step. The current system is overflowing.', userId: 'user3', userName: 'Biju Menon', createdAt: new Date(new Date().setDate(new Date().getDate() - 9))};
+  const reply1_2 = { content: 'I agree, but we also need better awareness programs for waste segregation.', userId: 'user4', userName: 'Priya Sharma', createdAt: new Date(new Date().setDate(new Date().getDate() - 8))};
+  lastReplies.set('topic1', {userName: reply1_2.userName, createdAt: reply1_2.createdAt});
+
+  // Topic 2
+  const reply2_1 = { content: 'We definitely need a separate area for smaller children.', userId: 'user5', userName: 'Rahul Nair', createdAt: new Date(new Date().setDate(new Date().getDate() - 7))};
+  const reply2_2 = { content: 'Good idea! Also, some exercise equipment for adults would be great.', userId: 'user1', userName: 'Suresh Kumar', createdAt: new Date(new Date().setDate(new Date().getDate() - 6))};
+  lastReplies.set('topic2', {userName: reply2_2.userName, createdAt: reply2_2.createdAt});
+
+  // Topic 3
+  const reply3_1 = { content: 'More buses during peak hours is a must!', userId: 'user1', userName: 'Suresh Kumar', createdAt: new Date(new Date().setDate(new Date().getDate() - 4))};
+  lastReplies.set('topic3', {userName: reply3_1.userName, createdAt: reply3_1.createdAt});
+
+  // Topic 4
+  const reply4_1 = { content: 'I think in the long run it will be very beneficial. We just have to bear with the temporary inconvenience.', userId: 'admin@example.gov', userName: 'Admin User', createdAt: new Date(new Date().setDate(new Date().getDate() - 2))};
+  lastReplies.set('topic4', {userName: reply4_1.userName, createdAt: reply4_1.createdAt});
+  
+  // Topic 5 has no replies yet.
+
   topicsData.forEach(topic => {
     const docRef = doc(topicsCol, topic.id);
-    batch.set(docRef, topic);
-    
-    // Add replies for each topic
-    if (topic.id === 'topic1') {
-      const reply1Ref = doc(collection(db, 'topics', topic.id, 'replies'));
-      batch.set(reply1Ref, { content: 'This is a much-needed step. The current system is overflowing.', userId: 'user3', userName: 'Biju Menon', createdAt: new Date(new Date().setDate(new Date().getDate() - 4))});
-      const reply2Ref = doc(collection(db, 'topics', topic.id, 'replies'));
-      batch.set(reply2Ref, { content: 'I agree, but we also need better awareness programs for waste segregation.', userId: 'user4', userName: 'Priya Sharma', createdAt: new Date(new Date().setDate(new Date().getDate() - 3))});
-    }
-     if (topic.id === 'topic2') {
-      const reply1Ref = doc(collection(db, 'topics', topic.id, 'replies'));
-      batch.set(reply1Ref, { content: 'We definitely need a separate area for smaller children.', userId: 'user5', userName: 'Rahul Nair', createdAt: new Date(new Date().setDate(new Date().getDate() - 1))});
-    }
-
+    const lastReply = lastReplies.get(topic.id);
+    batch.set(docRef, {...topic, ...(lastReply && {lastReply}) });
   });
+
+  // Add replies to subcollections
+  const t1r1 = doc(collection(db, 'topics/topic1/replies')); batch.set(t1r1, reply1_1);
+  const t1r2 = doc(collection(db, 'topics/topic1/replies')); batch.set(t1r2, reply1_2);
+  const t2r1 = doc(collection(db, 'topics/topic2/replies')); batch.set(t2r1, reply2_1);
+  const t2r2 = doc(collection(db, 'topics/topic2/replies')); batch.set(t2r2, reply2_2);
+  const t3r1 = doc(collection(db, 'topics/topic3/replies')); batch.set(t3r1, reply3_1);
+  const t4r1 = doc(collection(db, 'topics/topic4/replies')); batch.set(t4r1, reply4_1);
+
 
   try {
     await batch.commit();
