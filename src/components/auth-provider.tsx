@@ -8,7 +8,8 @@ import {
   signOut as firebaseSignOut,
   type User,
 } from "firebase/auth";
-import { auth } from "@/lib/firebase";
+import { auth, db } from "@/lib/firebase";
+import { doc, setDoc } from "firebase/firestore";
 import { useRouter } from "next/navigation";
 import { useToast } from "@/hooks/use-toast";
 import { validateAadhaar } from "@/ai/flows/validate-aadhaar-flow";
@@ -68,7 +69,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         throw new Error(validationResult.reason || "Invalid Aadhaar number.");
       }
       
-      await createUserWithEmailAndPassword(auth, email, pass);
+      const userCredential = await createUserWithEmailAndPassword(auth, email, pass);
+      const newUser = userCredential.user;
+
+      // Create a document in Firestore 'users' collection
+      await setDoc(doc(db, "users", newUser.uid), {
+        email: newUser.email,
+        aadhaar: aadhaar, // Storing for prototype purposes
+        createdAt: new Date(),
+      });
+
       router.push("/");
       toast({
         title: "Account Created",
