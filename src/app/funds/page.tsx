@@ -1,7 +1,8 @@
+
 "use client";
 
 import { useEffect, useState, useMemo } from "react";
-import { type ColumnDef, flexRender, getCoreRowModel, useReactTable, getPaginationRowModel, getSortedRowModel, type SortingState } from "@tanstack/react-table";
+import { type ColumnDef, flexRender, getCoreRowModel, useReactTable, getPaginationRowModel, getSortedRowModel, getFilteredRowModel, type SortingState, type ColumnFiltersState } from "@tanstack/react-table";
 import { db } from "@/lib/firebase";
 import { collection, getDocs } from "firebase/firestore";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
@@ -9,6 +10,8 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Button } from "@/components/ui/button";
 import { ArrowUpDown, Loader2 } from "lucide-react";
 import { useTranslation } from "@/hooks/use-translation";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Input } from "@/components/ui/input";
 
 interface Fund {
   id: string;
@@ -22,6 +25,7 @@ export default function FundsPage() {
   const [funds, setFunds] = useState<Fund[]>([]);
   const [loading, setLoading] = useState(true);
   const [sorting, setSorting] = useState<SortingState>([]);
+  const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
   const { t, ready } = useTranslation();
 
   useEffect(() => {
@@ -39,6 +43,11 @@ export default function FundsPage() {
     };
     fetchFunds();
   }, []);
+
+  const departments = useMemo(() => {
+    const allDepartments = funds.map(fund => fund.department);
+    return [...new Set(allDepartments)];
+  }, [funds]);
 
   const columns: ColumnDef<Fund>[] = useMemo(() => [
     {
@@ -89,8 +98,11 @@ export default function FundsPage() {
     getPaginationRowModel: getPaginationRowModel(),
     onSortingChange: setSorting,
     getSortedRowModel: getSortedRowModel(),
+    onColumnFiltersChange: setColumnFilters,
+    getFilteredRowModel: getFilteredRowModel(),
     state: {
       sorting,
+      columnFilters,
     },
   });
 
@@ -112,6 +124,24 @@ export default function FundsPage() {
           <CardDescription>{t("public_funds_tracker_desc")}</CardDescription>
         </CardHeader>
         <CardContent>
+          <div className="flex items-center py-4">
+            <Select
+              value={(table.getColumn("department")?.getFilterValue() as string) ?? ""}
+              onValueChange={(value) => table.getColumn("department")?.setFilterValue(value === "all" ? "" : value)}
+            >
+              <SelectTrigger className="w-[280px]">
+                <SelectValue placeholder={t("department")} />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">{t("all_departments")}</SelectItem>
+                {departments.map((dept) => (
+                  <SelectItem key={dept} value={dept}>
+                    {t(dept)}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
           <div className="rounded-md border">
             <Table>
               <TableHeader>
