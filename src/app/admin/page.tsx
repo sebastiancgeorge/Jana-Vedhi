@@ -11,7 +11,7 @@ import {
 } from "./actions";
 import { useToast } from "@/hooks/use-toast";
 import { useEffect, useState, useMemo, useCallback } from "react";
-import { Loader2, Trash2, MoreHorizontal, PlusCircle } from "lucide-react";
+import { Loader2, Trash2, MoreHorizontal, PlusCircle, Send } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import { useRouter } from "next/navigation";
 import { type ColumnDef, flexRender, getCoreRowModel, useReactTable } from "@tanstack/react-table";
@@ -45,6 +45,12 @@ const budgetSchema = z.object({
   votes: z.coerce.number().min(0).optional(),
 });
 
+const notificationSchema = z.object({
+    title: z.string().min(1, "Title is required."),
+    message: z.string().min(1, "Message is required."),
+    topic: z.string().min(1, "Topic is required.")
+});
+
 
 export default function AdminPage() {
   const { toast } = useToast();
@@ -73,6 +79,11 @@ export default function AdminPage() {
   const budgetForm = useForm<z.infer<typeof budgetSchema>>({
     resolver: zodResolver(budgetSchema),
     defaultValues: { title: "", description: "", status: "open", votes: 0 },
+  });
+
+  const notificationForm = useForm<z.infer<typeof notificationSchema>>({
+    resolver: zodResolver(notificationSchema),
+    defaultValues: { title: "", message: "", topic: "" },
   });
   
   const fetchData = useCallback(async () => {
@@ -163,6 +174,16 @@ export default function AdminPage() {
       fetchData();
       toast({ title: "Success", description: "Budget proposal deleted." });
   };
+
+  const handleNotificationSubmit = async (values: z.infer<typeof notificationSchema>) => {
+    // In a real app, this would call a server action to trigger FCM
+    console.log("Sending notification:", values);
+    toast({
+        title: "Notification Sent (Simulated)",
+        description: `Your message to the "${values.topic}" topic has been sent.`,
+    });
+    notificationForm.reset();
+  };
   
   // Table Columns
   const grievanceColumns: ColumnDef<Grievance>[] = useMemo(() => [
@@ -249,47 +270,112 @@ export default function AdminPage() {
       {loadingData ? (
         <div className="flex items-center justify-center h-64"><Loader2 className="h-8 w-8 animate-spin" /></div>
       ) : (
-        <>
-          <DataTableCard
-            title="Grievance Management"
-            description="View, update status, and delete submitted grievances."
-            table={grievanceTable}
-            columns={grievanceColumns}
-          />
+        <div className="grid gap-6 lg:grid-cols-2">
+            <div className="lg:col-span-2 space-y-6">
+                 <DataTableCard
+                    title="Grievance Management"
+                    description="View, update status, and delete submitted grievances."
+                    table={grievanceTable}
+                    columns={grievanceColumns}
+                />
 
-          <Dialog open={isFundDialogOpen} onOpenChange={(isOpen) => { setIsFundDialogOpen(isOpen); if (!isOpen) setEditingFund(null); }}>
-             <DataTableCard
-                title="Fund Management"
-                description="Add, edit, and delete fund allocation records."
-                table={fundTable}
-                columns={fundColumns}
-                onAdd={() => { setEditingFund(null); fundForm.reset(); setIsFundDialogOpen(true); }}
-             />
-             <FundDialogContent form={fundForm} onSubmit={handleFundSubmit} isEditing={!!editingFund} />
-          </Dialog>
+                <Dialog open={isFundDialogOpen} onOpenChange={(isOpen) => { setIsFundDialogOpen(isOpen); if (!isOpen) setEditingFund(null); }}>
+                    <DataTableCard
+                        title="Fund Management"
+                        description="Add, edit, and delete fund allocation records."
+                        table={fundTable}
+                        columns={fundColumns}
+                        onAdd={() => { setEditingFund(null); fundForm.reset(); setIsFundDialogOpen(true); }}
+                    />
+                    <FundDialogContent form={fundForm} onSubmit={handleFundSubmit} isEditing={!!editingFund} />
+                </Dialog>
 
-          <Dialog open={isBudgetDialogOpen} onOpenChange={(isOpen) => { setIsBudgetDialogOpen(isOpen); if (!isOpen) setEditingBudget(null); }}>
-              <DataTableCard
-                title="Budget Proposal Management"
-                description="Add, edit, and delete budget proposals for voting."
-                table={budgetTable}
-                columns={budgetColumns}
-                onAdd={() => { setEditingBudget(null); budgetForm.reset(); setIsBudgetDialogOpen(true); }}
-              />
-              <BudgetDialogContent form={budgetForm} onSubmit={handleBudgetSubmit} isEditing={!!editingBudget} />
-          </Dialog>
-        </>
+                <Dialog open={isBudgetDialogOpen} onOpenChange={(isOpen) => { setIsBudgetDialogOpen(isOpen); if (!isOpen) setEditingBudget(null); }}>
+                    <DataTableCard
+                        title="Budget Proposal Management"
+                        description="Add, edit, and delete budget proposals for voting."
+                        table={budgetTable}
+                        columns={budgetColumns}
+                        onAdd={() => { setEditingBudget(null); budgetForm.reset(); setIsBudgetDialogOpen(true); }}
+                    />
+                    <BudgetDialogContent form={budgetForm} onSubmit={handleBudgetSubmit} isEditing={!!editingBudget} />
+                </Dialog>
+            </div>
+            <div className="lg:col-span-2 space-y-6">
+                 <Card>
+                    <CardHeader>
+                        <CardTitle>Notification Composer</CardTitle>
+                        <CardDescription>Send push alerts to users subscribed to specific topics.</CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                        <Form {...notificationForm}>
+                            <form onSubmit={notificationForm.handleSubmit(handleNotificationSubmit)} className="space-y-4">
+                                <FormField
+                                    control={notificationForm.control}
+                                    name="topic"
+                                    render={({ field }) => (
+                                        <FormItem>
+                                            <FormLabel>Topic</FormLabel>
+                                            <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                                <FormControl>
+                                                    <SelectTrigger><SelectValue placeholder="Select a topic to send to" /></SelectTrigger>
+                                                </FormControl>
+                                                <SelectContent>
+                                                    <SelectItem value="new_budget_proposal">New Budget Proposal</SelectItem>
+                                                    <SelectItem value="grievance_status_update">Grievance Status Update</SelectItem>
+                                                    <SelectItem value="thiruvananthapuram">Thiruvananthapuram District</SelectItem>
+                                                    <SelectItem value="kollam">Kollam District</SelectItem>
+                                                    <SelectItem value="general_announcement">General Announcement</SelectItem>
+                                                </SelectContent>
+                                            </Select>
+                                            <FormMessage />
+                                        </FormItem>
+                                    )}
+                                />
+                                <FormField
+                                    control={notificationForm.control}
+                                    name="title"
+                                    render={({ field }) => (
+                                        <FormItem>
+                                            <FormLabel>Title</FormLabel>
+                                            <FormControl><Input {...field} placeholder="Notification Title" /></FormControl>
+                                            <FormMessage />
+                                        </FormItem>
+                                    )}
+                                />
+                                <FormField
+                                    control={notificationForm.control}
+                                    name="message"
+                                    render={({ field }) => (
+                                        <FormItem>
+                                            <FormLabel>Message</FormLabel>
+                                            <FormControl><Textarea {...field} placeholder="Notification message..." /></FormControl>
+                                            <FormMessage />
+                                        </FormItem>
+                                    )}
+                                />
+                                <Button type="submit" disabled={notificationForm.formState.isSubmitting}>
+                                    {notificationForm.formState.isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Send className="mr-2 h-4 w-4" />}
+                                    Send Notification
+                                </Button>
+                            </form>
+                        </Form>
+                    </CardContent>
+                </Card>
+                <Card>
+                    <CardHeader><CardTitle>Database Tools</CardTitle></CardHeader>
+                    <CardContent>
+                    <p className="text-sm text-muted-foreground mb-4">Populate the database with initial sample data. This will overwrite existing data.</p>
+                    <Button onClick={handleSeed} disabled={isSeeding}>
+                        {isSeeding && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}Seed Database
+                    </Button>
+                    </CardContent>
+                </Card>
+            </div>
+        </div>
       )}
       
-      <Card>
-        <CardHeader><CardTitle>Database Tools</CardTitle></CardHeader>
-        <CardContent>
-          <p className="text-sm text-muted-foreground mb-4">Populate the database with initial sample data. This will overwrite existing data.</p>
-          <Button onClick={handleSeed} disabled={isSeeding}>
-            {isSeeding && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}Seed Database
-          </Button>
-        </CardContent>
-      </Card>
+     
     </div>
   );
 }
@@ -413,3 +499,5 @@ const BudgetDialogContent = ({ form, onSubmit, isEditing }: { form: any, onSubmi
         </Form>
     </DialogContent>
 );
+
+    
