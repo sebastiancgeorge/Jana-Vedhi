@@ -5,7 +5,9 @@ import { db } from "@/lib/firebase";
 import { collection, addDoc, serverTimestamp } from "firebase/firestore";
 import { z } from "zod";
 
-export const GrievanceSchema = z.object({
+// The schema is now defined in the page.tsx file where the form is.
+// We still need the type here for the function argument.
+const GrievanceSchema = z.object({
   title: z.string().min(1, { message: "Title is required." }),
   description: z.string().min(1, { message: "Description is required." }),
   type: z.string().min(1, { message: "Grievance type is required." }),
@@ -13,6 +15,7 @@ export const GrievanceSchema = z.object({
 });
 
 export type GrievanceInput = z.infer<typeof GrievanceSchema>;
+
 
 export async function submitGrievance(input: GrievanceInput) {
   const parsedInput = GrievanceSchema.safeParse(input);
@@ -33,6 +36,7 @@ export async function submitGrievance(input: GrievanceInput) {
   } catch (error) {
     console.error("Error submitting grievance:", error);
     const errorMessage = error instanceof Error ? error.message : "An unknown error occurred.";
-    return { success: false, message: `Failed to submit grievance: ${errorMessage}` };
+    // Re-throw the error to be caught by the form's catch block
+    throw new Error(`Failed to submit grievance: ${errorMessage}`);
   }
 }

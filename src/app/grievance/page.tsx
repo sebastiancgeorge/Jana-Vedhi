@@ -11,12 +11,21 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/use-auth";
 import { useRouter } from "next/navigation";
-import { GrievanceSchema, type GrievanceInput, submitGrievance } from "./actions";
+import { type GrievanceInput, submitGrievance } from "./actions";
 import { useState } from "react";
 import { Loader2 } from "lucide-react";
 import { useTranslation } from "@/hooks/use-translation";
+import { z } from "zod";
 
 const grievanceTypes = ["Roads", "Waste", "Utilities", "Water", "Sanitation", "Other"];
+
+// Define the schema in the component file that uses it for the form.
+const GrievanceSchema = z.object({
+  title: z.string().min(1, { message: "Title is required." }),
+  description: z.string().min(1, { message: "Description is required." }),
+  type: z.string().min(1, { message: "Grievance type is required." }),
+  userId: z.string(),
+});
 
 export default function GrievancePage() {
   const { toast } = useToast();
@@ -46,17 +55,13 @@ export default function GrievancePage() {
   const onSubmit = async (data: GrievanceInput) => {
     setIsSubmitting(true);
     try {
-      const result = await submitGrievance(data);
-      if (result.success) {
-        toast({
-          title: t("grievance_submitted"),
-          description: t("grievance_submitted_desc"),
-        });
-        form.reset();
-        router.push("/");
-      } else {
-         throw new Error(result.message);
-      }
+      await submitGrievance(data);
+      toast({
+        title: t("grievance_submitted"),
+        description: t("grievance_submitted_desc"),
+      });
+      form.reset();
+      router.push("/");
     } catch (error) {
       toast({
         variant: "destructive",
