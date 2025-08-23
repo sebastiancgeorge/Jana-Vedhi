@@ -1,82 +1,48 @@
 "use client";
 
-import { useMemo } from "react";
-import Image from "next/image";
-import { scaleLinear } from "d3-scale";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { MapContainer, TileLayer, Marker, Tooltip } from "react-leaflet";
+import type { LatLngExpression } from "leaflet";
+import L from "leaflet";
 import type { GrievanceLocation } from "@/app/heatmap/actions";
 
 interface KeralaMapProps {
   points: GrievanceLocation[];
 }
 
-// Bounding box for Kerala
-const KERALA_BOUNDS = {
-  minLng: 74.8,
-  maxLng: 77.5,
-  minLat: 8.2,
-  maxLat: 12.8,
-};
-
-// Image/SVG dimensions
-const MAP_WIDTH = 500;
-const MAP_HEIGHT = 800;
+// Custom icon for markers to fix default icon issues with webpack
+const customIcon = new L.Icon({
+    iconUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon.png',
+    iconRetinaUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon-2x.png',
+    shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png',
+    iconSize: [25, 41],
+    iconAnchor: [12, 41],
+    popupAnchor: [1, -34],
+    shadowSize: [41, 41]
+});
 
 export function KeralaMap({ points }: KeralaMapProps) {
-  const xScale = useMemo(
-    () => scaleLinear().domain([KERALA_BOUNDS.minLng, KERALA_BOUNDS.maxLng]).range([0, MAP_WIDTH]),
-    []
-  );
-
-  const yScale = useMemo(
-    () => scaleLinear().domain([KERALA_BOUNDS.minLat, KERALA_BOUNDS.maxLat]).range([MAP_HEIGHT, 0]),
-    []
-  );
+  // Center of Kerala
+  const position: LatLngExpression = [10.8505, 76.2711];
 
   return (
-    <div className="relative" style={{ width: MAP_WIDTH, height: MAP_HEIGHT }}>
-      <TooltipProvider>
-        <Image
-          src="https://placehold.co/500x800.png"
-          alt="Map of Kerala"
-          width={MAP_WIDTH}
-          height={MAP_HEIGHT}
-          className="absolute inset-0 w-full h-full object-contain"
-          data-ai-hint="kerala political map"
-        />
-        <svg
-          viewBox={`0 0 ${MAP_WIDTH} ${MAP_HEIGHT}`}
-          width={MAP_WIDTH}
-          height={MAP_HEIGHT}
-          className="relative z-10" // Make SVG appear on top
-        >
-          {points.map((point) => {
-            const cx = xScale(point.location.lng);
-            const cy = yScale(point.location.lat);
-
-            // Don't render points outside the viewport
-            if (cx < 0 || cx > MAP_WIDTH || cy < 0 || cy > MAP_HEIGHT) {
-              return null;
-            }
-
-            return (
-              <Tooltip key={point.id}>
-                <TooltipTrigger asChild>
-                  <circle
-                    cx={cx}
-                    cy={cy}
-                    r="5"
-                    className="fill-destructive/70 stroke-destructive transition-all hover:fill-destructive hover:r-7"
-                  />
-                </TooltipTrigger>
-                <TooltipContent>
-                  <p>{point.title}</p>
-                </TooltipContent>
-              </Tooltip>
-            );
-          })}
-        </svg>
-      </TooltipProvider>
+    <div className="relative h-[600px] w-full rounded-md border overflow-hidden">
+        <MapContainer center={position} zoom={7} scrollWheelZoom={false} className="h-full w-full">
+            <TileLayer
+                attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+                url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+            />
+            {points.map((point) => (
+                <Marker 
+                    key={point.id} 
+                    position={[point.location.lat, point.location.lng]}
+                    icon={customIcon}
+                >
+                <Tooltip>
+                    <p>{point.title}</p>
+                </Tooltip>
+                </Marker>
+            ))}
+        </MapContainer>
     </div>
   );
 }
