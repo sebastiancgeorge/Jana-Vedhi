@@ -2,7 +2,7 @@
 "use server";
 
 import { db } from "@/lib/firebase";
-import { collection, getDocs, query, where, orderBy } from "firebase/firestore";
+import { collection, getDocs, query, where, orderBy, type Timestamp } from "firebase/firestore";
 
 export interface Grievance {
   id: string;
@@ -10,10 +10,7 @@ export interface Grievance {
   description: string;
   status: 'submitted' | 'in_progress' | 'resolved';
   type: string;
-  createdAt: {
-    seconds: number;
-    nanoseconds: number;
-  }
+  createdAt: Timestamp;
 }
 
 export async function getUserGrievances(userId: string): Promise<Grievance[]> {
@@ -29,6 +26,7 @@ export async function getUserGrievances(userId: string): Promise<Grievance[]> {
       orderBy("createdAt", "desc")
     );
     const snapshot = await getDocs(q);
+    // Next.js can serialize Firestore Timestamps if they are correctly typed.
     return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Grievance));
   } catch (error) {
     console.error("Error fetching user grievances:", error);
