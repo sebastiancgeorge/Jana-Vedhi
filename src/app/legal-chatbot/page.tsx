@@ -8,16 +8,19 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Bot, Gavel, Send, User, Files, Mic, Volume2 } from "lucide-react";
+import { Bot, Gavel, Send, User, Files, Mic, Volume2, Landmark } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { useTranslation } from "@/hooks/use-translation";
+import { Separator } from "@/components/ui/separator";
 
 type Message = {
   id: string;
   text: string;
   sender: "user" | "bot";
   source?: string;
+  relatedCases?: { caseName: string; summary: string }[];
   translatedText?: string;
+  translatedCases?: { caseName: string; summary: string }[];
 };
 
 export default function LegalChatbotPage() {
@@ -57,9 +60,15 @@ export default function LegalChatbotPage() {
 
   const translateMessages = useCallback(async (msgs: Message[]) => {
     const promises = msgs.map(async (msg) => {
-        if (msg.sender === 'bot' && !msg.translatedText) {
-            const translated = await translateDynamicText(msg.text);
-            return { ...msg, translatedText: translated };
+        if (msg.sender === 'bot' && (!msg.translatedText || !msg.translatedCases)) {
+            const translatedText = msg.translatedText ?? await translateDynamicText(msg.text);
+            const translatedCases = msg.translatedCases ?? (msg.relatedCases ? await Promise.all(
+                msg.relatedCases.map(async (c) => ({
+                    caseName: await translateDynamicText(c.caseName),
+                    summary: await translateDynamicText(c.summary)
+                }))
+            ) : undefined);
+            return { ...msg, translatedText, translatedCases };
         }
         return msg;
     });
@@ -101,6 +110,7 @@ export default function LegalChatbotPage() {
         text: botResponse.answer,
         sender: "bot",
         source: botResponse.source,
+        relatedCases: botResponse.relatedCases
       };
       setMessages((prev) => [...prev, botMessage]);
     } catch (error) {
@@ -156,50 +166,73 @@ export default function LegalChatbotPage() {
                   <p>{t("legal_chatbot_placeholder")}</p>
                 </div>
               )}
-              {messages.map((message) => (
-                <div
-                  key={message.id}
-                  className={`flex items-start gap-4 ${
-                    message.sender === "user" ? "justify-end" : ""
-                  }`}
-                >
-                  {message.sender === "bot" && (
-                    <Avatar className="h-9 w-9 border">
-                      <AvatarFallback><Bot className="h-5 w-5" /></AvatarFallback>
-                    </Avatar>
-                  )}
+              {messages.map((message) => {
+                 const cases = language === 'malayalam' ? message.translatedCases : message.relatedCases;
+                 const text = language === 'malayalam' && message.translatedText ? message.translatedText : message.text;
+
+                return (
                   <div
-                    className={`max-w-md rounded-lg p-3 relative group ${
-                      message.sender === "user"
-                        ? "bg-primary text-primary-foreground"
-                        : "bg-muted"
+                    key={message.id}
+                    className={`flex items-start gap-4 ${
+                      message.sender === "user" ? "justify-end" : ""
                     }`}
                   >
-                    <p className="text-sm whitespace-pre-wrap">{language === 'malayalam' && message.translatedText ? message.translatedText : message.text}</p>
-                    {message.source && (
-                      <Badge variant="secondary" className="mt-2">
-                        <Files className="mr-1 h-3 w-3" />
-                        {t("source")}: {t(message.source)}
-                      </Badge>
-                    )}
                     {message.sender === "bot" && (
-                        <Button
-                            variant="ghost"
-                            size="icon"
-                            className="absolute -top-2 -right-2 h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity"
-                            onClick={() => handleSpeak(language === 'malayalam' && message.translatedText ? message.translatedText : message.text)}
-                        >
-                            <Volume2 className="h-4 w-4" />
-                        </Button>
+                      <Avatar className="h-9 w-9 border">
+                        <AvatarFallback><Bot className="h-5 w-5" /></AvatarFallback>
+                      </Avatar>
+                    )}
+                    <div
+                      className={`max-w-xl w-full rounded-lg p-3 relative group ${
+                        message.sender === "user"
+                          ? "bg-primary text-primary-foreground max-w-md"
+                          : "bg-muted"
+                      }`}
+                    >
+                      <p className="text-sm whitespace-pre-wrap">{text}</p>
+                      {message.source && (
+                        <Badge variant="secondary" className="mt-2">
+                          <Files className="mr-1 h-3 w-3" />
+                          {t("source")}: {t(message.source)}
+                        </Badge>
+                      )}
+                      
+                      {cases && cases.length > 0 && (
+                        <div className="mt-4">
+                           <Separator />
+                           <div className="pt-3">
+                            <h4 className="font-semibold text-sm mb-2 flex items-center gap-2"><Landmark className="h-4 w-4"/>Related Cases</h4>
+                            <div className="space-y-3">
+                                {cases.map((c, i) => (
+                                    <div key={i} className="p-2 bg-background/50 rounded-md border">
+                                        <p className="font-semibold text-sm">{c.caseName}</p>
+                                        <p className="text-xs text-muted-foreground mt-1">{c.summary}</p>
+                                    </div>
+                                ))}
+                            </div>
+                           </div>
+                        </div>
+                      )}
+
+                      {message.sender === "bot" && (
+                          <Button
+                              variant="ghost"
+                              size="icon"
+                              className="absolute -top-2 -right-2 h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity"
+                              onClick={() => handleSpeak(text)}
+                          >
+                              <Volume2 className="h-4 w-4" />
+                          </Button>
+                      )}
+                    </div>
+                    {message.sender === "user" && (
+                       <Avatar className="h-9 w-9 border">
+                        <AvatarFallback><User className="h-5 w-5" /></AvatarFallback>
+                      </Avatar>
                     )}
                   </div>
-                  {message.sender === "user" && (
-                     <Avatar className="h-9 w-9 border">
-                      <AvatarFallback><User className="h-5 w-5" /></AvatarFallback>
-                    </Avatar>
-                  )}
-                </div>
-              ))}
+                )
+              })}
                {isLoading && (
                 <div className="flex items-start gap-4">
                   <Avatar className="h-9 w-9 border">
