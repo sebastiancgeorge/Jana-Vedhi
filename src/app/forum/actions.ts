@@ -1,3 +1,4 @@
+
 "use server";
 
 import { db } from "@/lib/firebase";
@@ -59,8 +60,9 @@ export type ReplyInput = z.infer<typeof ReplySchema>;
 export async function getTopics(): Promise<Topic[]> {
   try {
     const topicsCol = collection(db, "topics");
-    // Order by last reply time, then by creation time for topics with no replies
-    const q = query(topicsCol, orderBy("lastReply.createdAt", "desc"), orderBy("createdAt", "desc"));
+    // A simpler query that orders only by creation date to ensure all topics are fetched.
+    // The more complex sorting (by last reply) will be handled on the client.
+    const q = query(topicsCol, orderBy("createdAt", "desc"));
     const snapshot = await getDocs(q);
     return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Topic));
   } catch (error) {

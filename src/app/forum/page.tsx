@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useEffect, useState } from "react";
@@ -32,7 +33,13 @@ export default function ForumPage() {
       try {
         setLoading(true);
         const fetchedTopics = await getTopics();
-        setTopics(fetchedTopics);
+        // Sort topics client-side to ensure topics without replies are shown correctly.
+        const sortedTopics = fetchedTopics.sort((a, b) => {
+            const timeA = a.lastReply ? a.lastReply.createdAt.toMillis() : a.createdAt.toMillis();
+            const timeB = b.lastReply ? b.lastReply.createdAt.toMillis() : b.createdAt.toMillis();
+            return timeB - timeA;
+        });
+        setTopics(sortedTopics);
       } catch (error) {
         toast({
           variant: "destructive",
