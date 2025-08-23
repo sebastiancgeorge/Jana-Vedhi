@@ -12,7 +12,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/use-auth";
 import { useRouter } from "next/navigation";
-import { type GrievanceInput, submitGrievance } from "./actions";
+import { submitGrievance } from "./actions";
 import { useState, useRef, useEffect } from "react";
 import { Loader2, Mic } from "lucide-react";
 import { useTranslation } from "@/hooks/use-translation";
@@ -27,6 +27,9 @@ const GrievanceSchema = z.object({
   type: z.string().min(1, { message: "Grievance type is required." }),
   userId: z.string(),
 });
+
+type GrievanceInput = z.infer<typeof GrievanceSchema>;
+
 
 export default function GrievancePage() {
   const { toast } = useToast();
@@ -63,13 +66,16 @@ export default function GrievancePage() {
     if (typeof window !== 'undefined' && ('SpeechRecognition' in window || 'webkitSpeechRecognition' in window)) {
         const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
         recognitionRef.current = new SpeechRecognition();
-        recognitionRef.current.continuous = false;
+        recognitionRef.current.continuous = true;
+        recognitionRef.current.interimResults = true;
         recognitionRef.current.lang = language === 'malayalam' ? 'ml-IN' : 'en-US';
 
         recognitionRef.current.onresult = (event: any) => {
-            const transcript = event.results[0][0].transcript;
-            form.setValue("description", form.getValues("description") + transcript);
-            setIsListening(false);
+            const transcript = Array.from(event.results)
+                .map((result: any) => result[0])
+                .map((result) => result.transcript)
+                .join('');
+            form.setValue("description", transcript);
         };
 
         recognitionRef.current.onerror = (event: any) => {
@@ -111,16 +117,21 @@ export default function GrievancePage() {
   };
 
   const toggleListen = () => {
-    if (isListening) {
+     if (isListening) {
       recognitionRef.current?.stop();
+      setIsListening(false);
     } else {
       recognitionRef.current?.start();
+      setIsListening(true);
     }
-    setIsListening(!isListening);
   };
   
-  if (authLoading || !user) {
+  if (authLoading) {
     return <div className="flex h-screen items-center justify-center"><Loader2 className="h-8 w-8 animate-spin" /></div>;
+  }
+  
+  if (!user) {
+    return null; // The redirect is handled in useEffect
   }
 
   return (

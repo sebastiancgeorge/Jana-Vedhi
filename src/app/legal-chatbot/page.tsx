@@ -34,13 +34,18 @@ export default function LegalChatbotPage() {
     if (typeof window !== 'undefined' && ('SpeechRecognition' in window || 'webkitSpeechRecognition' in window)) {
       const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
       recognitionRef.current = new SpeechRecognition();
-      recognitionRef.current.continuous = false;
+      recognitionRef.current.continuous = true;
+      recognitionRef.current.interimResults = true;
       recognitionRef.current.lang = language === 'malayalam' ? 'ml-IN' : 'en-US';
+
       recognitionRef.current.onresult = (event: any) => {
-        const transcript = event.results[0][0].transcript;
+        const transcript = Array.from(event.results)
+            .map((result: any) => result[0])
+            .map((result) => result.transcript)
+            .join('');
         setInput(transcript);
-        setIsListening(false);
       };
+
       recognitionRef.current.onerror = (event: any) => {
         console.error("Speech recognition error", event.error);
         setIsListening(false);
@@ -123,10 +128,11 @@ export default function LegalChatbotPage() {
   const toggleListen = () => {
     if (isListening) {
       recognitionRef.current?.stop();
+      setIsListening(false);
     } else {
       recognitionRef.current?.start();
+      setIsListening(true);
     }
-    setIsListening(!isListening);
   };
 
   return (
