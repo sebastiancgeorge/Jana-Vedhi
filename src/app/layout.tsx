@@ -3,6 +3,7 @@ import './globals.css';
 import { AppLayout } from '@/components/app-layout';
 import { Toaster } from '@/components/ui/toaster';
 import { AuthProvider } from '@/components/auth-provider';
+import { LanguageProvider } from '@/components/language-provider';
 
 export const metadata: Metadata = {
   title: 'Jana Vedhi',
@@ -26,7 +27,9 @@ export default function RootLayout({
       </head>
       <body className="font-body antialiased">
         <AuthProvider>
-          <AppLayout>{children}</AppLayout>
+          <LanguageProvider>
+            <AppLayout>{children}</AppLayout>
+          </LanguageProvider>
         </AuthProvider>
         <Toaster />
       </body>
