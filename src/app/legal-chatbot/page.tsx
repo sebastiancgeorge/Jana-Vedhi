@@ -179,12 +179,6 @@ export default function LegalChatbotPage() {
                       }`}
                     >
                       <p className="text-sm whitespace-pre-wrap">{text}</p>
-                      {message.source && (
-                        <Badge variant="secondary" className="mt-2">
-                          <Files className="mr-1 h-3 w-3" />
-                          {t("source")}: {t(message.source)}
-                        </Badge>
-                      )}
                       
                       {message.sender === "bot" && (
                           <Button
