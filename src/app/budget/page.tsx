@@ -5,10 +5,12 @@ import { useToast } from "@/hooks/use-toast";
 import { getBudgets, toggleVote, type Budget } from "./actions";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Loader2, ThumbsUp, ThumbsDown } from "lucide-react";
+import { Loader2, ThumbsUp, ThumbsDown, MessageSquare } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import { Badge } from "@/components/ui/badge";
 import { useTranslation } from "@/hooks/use-translation";
+import Link from "next/link";
+import { Separator } from "@/components/ui/separator";
 
 export default function BudgetPage() {
   const [budgets, setBudgets] = useState<Budget[]>([]);
@@ -110,7 +112,8 @@ export default function BudgetPage() {
                     {t(budget.status)}
                 </Badge>
               </CardContent>
-              <CardFooter>
+              <Separator />
+              <CardFooter className="flex flex-col items-stretch gap-2 pt-4">
                 <Button
                   onClick={() => handleVote(budget.id, hasVoted)}
                   disabled={!user || isVoting || budget.status === 'closed'}
@@ -127,6 +130,12 @@ export default function BudgetPage() {
                     </>
                   )}
                 </Button>
+                 <Button asChild variant="outline" className="w-full">
+                    <Link href={`/forum`}>
+                        <MessageSquare className="mr-2 h-4 w-4" />
+                        {t('discuss')}
+                    </Link>
+                </Button>
               </CardFooter>
             </Card>
           )
@@ -142,3 +151,5 @@ export default function BudgetPage() {
     </div>
   );
 }
+
+    

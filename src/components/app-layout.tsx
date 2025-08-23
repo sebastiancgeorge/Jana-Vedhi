@@ -28,6 +28,7 @@ import {
   LogIn,
   LogOut,
   Map,
+  MessageSquare,
   Shield,
   User,
   Users,
@@ -62,6 +63,7 @@ export function AppLayout({ children }: { children: ReactNode }) {
     { href: "/grievance", label: t("submit_grievance"), icon: FilePenLine },
     { href: "/heatmap", label: t("grievance_heatmap"), icon: Map },
     { href: "/politicians", label: t("politician_tracker"), icon: Users },
+    { href: "/forum", label: t("forum"), icon: MessageSquare },
     { href: "/notifications", label: t("notifications"), icon: Bell },
   ];
 
@@ -72,8 +74,26 @@ export function AppLayout({ children }: { children: ReactNode }) {
   ];
 
 
-  if (pathname === '/login') {
-    return <main className="flex-1">{children}</main>;
+  if (pathname === '/login' || pathname.startsWith('/forum/')) {
+    return (
+        <div className="flex flex-col min-h-screen">
+             <header className="sticky top-0 z-30 flex h-14 items-center justify-between border-b bg-background/80 px-4 backdrop-blur-sm lg:px-6">
+                <Link href="/" className="flex items-center gap-2">
+                    <Leaf className="h-7 w-7 text-primary" />
+                    <span className="text-xl font-semibold text-primary">
+                    {t('jana_vedhi')}
+                    </span>
+                </Link>
+                <div className="flex items-center gap-4">
+                    <ThemeSwitcher />
+                    <LanguageSwitcher />
+                    <FontSizeSlider />
+                    <UserMenu />
+                </div>
+            </header>
+            <main className="flex-1 p-4 sm:p-6">{children}</main>
+        </div>
+    )
   }
 
   return (
@@ -172,7 +192,7 @@ function UserMenu() {
         >
           <Avatar className="h-8 w-8">
             <AvatarImage src={user.photoURL ?? undefined} alt={user.displayName ?? 'User'} />
-            <AvatarFallback>{user.displayName?.charAt(0) ?? 'U'}</AvatarFallback>
+            <AvatarFallback>{(user.displayName ?? user.email ?? 'U').charAt(0).toUpperCase()}</AvatarFallback>
           </Avatar>
           <div className="text-left group-data-[collapsible=icon]:hidden">
             <p className="text-sm font-medium">{t(user.displayName ?? 'citizen')}</p>
@@ -234,3 +254,5 @@ function LanguageSwitcher() {
     </DropdownMenu>
   );
 }
+
+    

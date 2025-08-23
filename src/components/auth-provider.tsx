@@ -18,8 +18,16 @@ import { Loader2 } from "lucide-react";
 
 type UserRole = 'citizen' | 'admin';
 
+interface UserDetails {
+    name: string;
+    role: UserRole;
+    aadhaar: string;
+    aadhaarVerified: boolean;
+}
+
 interface AuthContextType {
   user: User | null;
+  userDetails: UserDetails | null;
   userRole: UserRole | null;
   loading: boolean;
   signInWithEmail: (email: string, pass: string) => Promise<void>;
@@ -31,6 +39,7 @@ export const AuthContext = createContext<AuthContextType | undefined>(undefined)
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
+  const [userDetails, setUserDetails] = useState<UserDetails | null>(null);
   const [userRole, setUserRole] = useState<UserRole | null>(null);
   const [loading, setLoading] = useState(true);
   const router = useRouter();
@@ -42,27 +51,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (user) {
         setUser(user);
         // Always fetch user role from Firestore as the source of truth
-        const userDocRef = doc(db, "users", user.uid);
+        const userDocRef = doc(db, "users", user.email!);
         const userDoc = await getDoc(userDocRef);
         if (userDoc.exists()) {
-          setUserRole(userDoc.data().role || 'citizen');
+          const userData = userDoc.data() as UserDetails;
+          setUserDetails(userData);
+          setUserRole(userData.role || 'citizen');
         } else {
-          // This might happen if a user is created in Auth but their Firestore doc fails to write
-          // or during the brief moment after sign-up before the doc is created.
-          // Let's also check if an admin document exists with this email, in case UID doesn't match up
-          // (e.g., if auth user was created manually and seeded doc has a different ID).
-          const usersRef = collection(db, "users");
-          const q = query(usersRef, where("email", "==", user.email), where("role", "==", "admin"));
-          const querySnapshot = await getDocs(q);
-          if (!querySnapshot.empty) {
-            setUserRole('admin');
-          } else {
             setUserRole('citizen');
-          }
+            setUserDetails(null);
         }
       } else {
         setUser(null);
         setUserRole(null);
+        setUserDetails(null);
       }
       setLoading(false);
     });
@@ -90,35 +92,32 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const signUpWithEmail = async (email: string, pass: string, aadhaar: string) => {
     setLoading(true);
     try {
+      // Check if user already exists
+      const userDocRef = doc(db, "users", email);
+      const userDoc = await getDoc(userDocRef);
+      if (userDoc.exists()) {
+          throw new Error("An account with this email already exists. Please sign in.");
+      }
+
       const validationResult = await validateAadhaar({ aadhaarNumber: aadhaar });
   
       if (!validationResult.isValid) {
         throw new Error(validationResult.reason || "Invalid Aadhaar number.");
       }
   
-      // Check if a user document with this email already exists and is an admin
-      const adminDocRef = doc(db, "users", email);
-      const adminDoc = await getDoc(adminDocRef);
-      if (adminDoc.exists() && adminDoc.data()?.role === 'admin') {
-         // If the admin user tries to "sign up", we just log them in instead.
-         // This assumes they are using a password they remember or a new one.
-         // For a real app, a "Forgot Password" flow is better.
-         // Here, we'll try to sign in. If it fails, it means wrong password.
-         await signInWithEmail(email, pass);
-         return; // Skip the rest of the sign-up process
-      }
-  
       const userCredential = await createUserWithEmailAndPassword(auth, email, pass);
       const newUser = userCredential.user;
+      
+      const name = email.split('@')[0]; // Simple name generation
   
       // Create a document in Firestore 'users' collection for the new citizen
-      await setDoc(doc(db, "users", newUser.uid), {
-        uid: newUser.uid, // Store UID
+      await setDoc(doc(db, "users", newUser.email!), {
         email: newUser.email,
         aadhaar: aadhaar,
-        role: 'citizen', // Default role is 'citizen'
+        role: 'citizen',
         aadhaarVerified: true,
         createdAt: new Date(),
+        name: name,
       });
       
       setUserRole('citizen');
@@ -161,6 +160,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const value = {
     user,
+    userDetails,
     userRole,
     loading,
     signInWithEmail,
@@ -174,3 +174,5 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     </AuthContext.Provider>
   );
 }
+
+    

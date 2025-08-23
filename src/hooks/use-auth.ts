@@ -6,8 +6,16 @@ import { type User } from "firebase/auth";
 
 type UserRole = 'citizen' | 'admin';
 
+interface UserDetails {
+    name: string;
+    role: UserRole;
+    aadhaar: string;
+    aadhaarVerified: boolean;
+}
+
 interface AuthHook {
   user: User | null;
+  userDetails: UserDetails | null;
   userRole: UserRole | null;
   loading: boolean;
   signInWithEmail: (email: string, pass: string) => Promise<void>;
@@ -22,3 +30,5 @@ export const useAuth = (): AuthHook => {
   }
   return context;
 };
+
+    

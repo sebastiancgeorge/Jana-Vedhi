@@ -170,5 +170,28 @@
   "legal_chatbot_placeholder": "Ask a question to get started, e.g., \"How do I file a property tax appeal?\"",
   "legal_chatbot_input_placeholder": "Type your legal question here...",
   "source": "Source",
-  "Legal FAQ": "Legal FAQ"
+  "Legal FAQ": "Legal FAQ",
+  "forum": "Forum",
+  "community_forum": "Community Forum",
+  "community_forum_desc": "Discuss topics with other citizens.",
+  "start_new_discussion": "Start a New Discussion",
+  "no_topics_found": "No discussion topics found yet.",
+  "new_discussion_topic": "New Discussion Topic",
+  "new_discussion_topic_desc": "Create a new topic for others to discuss.",
+  "content": "Content",
+  "content_placeholder": "Write the main content of your topic here...",
+  "create_topic": "Create Topic",
+  "topic_created_successfully": "Topic created successfully!",
+  "failed_to_create_topic": "Failed to create topic.",
+  "by": "by",
+  "replies": "Replies",
+  "no_replies_yet": "No replies yet. Be the first to comment!",
+  "your_reply": "Your Reply",
+  "your_reply_placeholder": "Write your reply here...",
+  "post_reply": "Post Reply",
+  "reply_posted_successfully": "Reply posted successfully!",
+  "failed_to_post_reply": "Failed to post reply.",
+  "discuss": "Discuss"
 }
+
+    

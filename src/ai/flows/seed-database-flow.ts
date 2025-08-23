@@ -24,18 +24,18 @@ async function seedDatabaseLogic(): Promise<SeedDatabaseOutput> {
   // Sample Users Data
   // Note: Using the email as the document ID for the admin for easier lookup.
   const usersData = [
-    { id: 'user1', email: 'citizen1@example.com', aadhaar: '111122223333', role: 'citizen', aadhaarVerified: true, createdAt: new Date() },
-    { id: 'user2', email: 'citizen2@example.com', aadhaar: '444455556666', role: 'citizen', aadhaarVerified: true, createdAt: new Date() },
-    { id: 'user3', email: 'citizen3@example.com', aadhaar: '123412341234', role: 'citizen', aadhaarVerified: true, createdAt: new Date() },
-    { id: 'user4', email: 'citizen4@example.com', aadhaar: '567856785678', role: 'citizen', aadhaarVerified: true, createdAt: new Date() },
-    { id: 'user5', email: 'citizen5@example.com', aadhaar: '987698769876', role: 'citizen', aadhaarVerified: true, createdAt: new Date() },
-    { id: 'user6', email: 'citizen6@example.com', aadhaar: '432143214321', role: 'citizen', aadhaarVerified: true, createdAt: new Date() },
-    { id: 'user7', email: 'citizen7@example.com', aadhaar: '876587658765', role: 'citizen', aadhaarVerified: true, createdAt: new Date() },
-    { id: 'admin@example.gov', email: 'admin@example.gov', aadhaar: '777788889999', role: 'admin', aadhaarVerified: true, createdAt: new Date() },
+    { id: 'user1', email: 'citizen1@example.com', aadhaar: '111122223333', role: 'citizen', aadhaarVerified: true, createdAt: new Date(), name: "Suresh Kumar" },
+    { id: 'user2', email: 'citizen2@example.com', aadhaar: '444455556666', role: 'citizen', aadhaarVerified: true, createdAt: new Date(), name: "Anitha Raj" },
+    { id: 'user3', email: 'citizen3@example.com', aadhaar: '123412341234', role: 'citizen', aadhaarVerified: true, createdAt: new Date(), name: "Biju Menon" },
+    { id: 'user4', email: 'citizen4@example.com', aadhaar: '567856785678', role: 'citizen', aadhaarVerified: true, createdAt: new Date(), name: "Priya Sharma" },
+    { id: 'user5', email: 'citizen5@example.com', aadhaar: '987698769876', role: 'citizen', aadhaarVerified: true, createdAt: new Date(), name: "Rahul Nair" },
+    { id: 'user6', email: 'citizen6@example.com', aadhaar: '432143214321', role: 'citizen', aadhaarVerified: true, createdAt: new Date(), name: "Deepa Krishnan" },
+    { id: 'user7', email: 'citizen7@example.com', aadhaar: '876587658765', role: 'citizen', aadhaarVerified: true, createdAt: new Date(), name: "Vinod Pillai" },
+    { id: 'admin@example.gov', email: 'admin@example.gov', aadhaar: '777788889999', role: 'admin', aadhaarVerified: true, createdAt: new Date(), name: "Admin User" },
   ];
   const usersCol = collection(db, 'users');
   usersData.forEach(user => {
-    const docRef = doc(usersCol, user.id);
+    const docRef = doc(usersCol, user.email); // Use email as ID for all for consistency
     batch.set(docRef, user);
   });
 
@@ -65,21 +65,21 @@ async function seedDatabaseLogic(): Promise<SeedDatabaseOutput> {
 
   // Sample Budgets Data
   const budgetsData = [
-    { id: 'budget1', title: 'Park renovation in Ward 5', description: 'Renovate the children\'s park with new swings and benches.', votes: 120, status: 'open' },
-    { id: 'budget2', title: 'Streetlight installation', description: 'Install 50 new LED streetlights in the west zone.', votes: 250, status: 'open' },
-    { id: 'budget3', title: 'Community hall construction', description: 'Build a new community hall for public events.', votes: 80, status: 'closed' },
-    { id: 'budget4', title: 'Waste management system upgrade', description: 'Purchase new bins and a collection truck for the city.', votes: 310, status: 'open' },
-    { id: 'budget5', title: 'Public library book acquisition', description: 'Acquire 1000 new books for the public library.', votes: 150, status: 'closed' },
-    { id: 'budget6', title: 'Rainwater harvesting initiative', description: 'Provide subsidies for installing rainwater harvesting systems.', votes: 180, status: 'open' },
-    { id: 'budget7', title: 'Free public gym setup', description: 'Set up an open-air gym in the central park.', votes: 220, status: 'open' },
-    { id: 'budget8', title: 'E-waste collection drive', description: 'Organize a monthly e-waste collection program.', votes: 95, status: 'closed' },
-    { id: 'budget9', title: 'CCTV installation for safety', description: 'Install security cameras in key residential areas.', votes: 450, status: 'open' },
-    { id: 'budget10', title: 'Beautification of riverfront', description: 'Develop a walkway and seating along the river.', votes: 280, status: 'closed' },
-    { id: 'budget11', title: 'Skill development workshops', description: 'Conduct free workshops for unemployed youth.', votes: 170, status: 'open' },
-    { id: 'budget12', title: 'Animal shelter upgrade', description: 'Expand and modernize the city animal shelter.', votes: 300, status: 'open' },
-    { id: 'budget13', title: 'Public toilet construction', description: 'Build and maintain clean public toilets in market areas.', votes: 190, status: 'closed' },
-    { id: 'budget14', title: 'Solar panel subsidies for homes', description: 'Promote renewable energy with home solar panel subsidies.', votes: 350, status: 'open' },
-    { id: 'budget15', title: 'Digital literacy program for seniors', description: 'Provide free classes on using smartphones and computers.', votes: 130, status: 'closed' },
+    { id: 'budget1', title: 'Park renovation in Ward 5', description: 'Renovate the children\'s park with new swings and benches.', votes: 120, status: 'open', votedBy: ['user1', 'user3'] },
+    { id: 'budget2', title: 'Streetlight installation', description: 'Install 50 new LED streetlights in the west zone.', votes: 250, status: 'open', votedBy: ['user2', 'user4', 'user5'] },
+    { id: 'budget3', title: 'Community hall construction', description: 'Build a new community hall for public events.', votes: 80, status: 'closed', votedBy: [] },
+    { id: 'budget4', title: 'Waste management system upgrade', description: 'Purchase new bins and a collection truck for the city.', votes: 310, status: 'open', votedBy: ['user1', 'user6'] },
+    { id: 'budget5', title: 'Public library book acquisition', description: 'Acquire 1000 new books for the public library.', votes: 150, status: 'closed', votedBy: [] },
+    { id: 'budget6', title: 'Rainwater harvesting initiative', description: 'Provide subsidies for installing rainwater harvesting systems.', votes: 180, status: 'open', votedBy: ['user7'] },
+    { id: 'budget7', title: 'Free public gym setup', description: 'Set up an open-air gym in the central park.', votes: 220, status: 'open', votedBy: [] },
+    { id: 'budget8', title: 'E-waste collection drive', description: 'Organize a monthly e-waste collection program.', votes: 95, status: 'closed', votedBy: [] },
+    { id: 'budget9', title: 'CCTV installation for safety', description: 'Install security cameras in key residential areas.', votes: 450, status: 'open', votedBy: ['user1', 'user2', 'user3'] },
+    { id: 'budget10', title: 'Beautification of riverfront', description: 'Develop a walkway and seating along the river.', votes: 280, status: 'closed', votedBy: [] },
+    { id: 'budget11', title: 'Skill development workshops', description: 'Conduct free workshops for unemployed youth.', votes: 170, status: 'open', votedBy: ['user5'] },
+    { id: 'budget12', title: 'Animal shelter upgrade', description: 'Expand and modernize the city animal shelter.', votes: 300, status: 'open', votedBy: [] },
+    { id: 'budget13', title: 'Public toilet construction', description: 'Build and maintain clean public toilets in market areas.', votes: 190, status: 'closed', votedBy: [] },
+    { id: 'budget14', title: 'Solar panel subsidies for homes', description: 'Promote renewable energy with home solar panel subsidies.', votes: 350, status: 'open', votedBy: ['user4'] },
+    { id: 'budget15', title: 'Digital literacy program for seniors', description: 'Provide free classes on using smartphones and computers.', votes: 130, status: 'closed', votedBy: [] },
   ];
   const budgetsCol = collection(db, 'budgets');
   budgetsData.forEach(budget => {
@@ -108,26 +108,52 @@ async function seedDatabaseLogic(): Promise<SeedDatabaseOutput> {
   
   // Sample Grievances Data
   const grievancesData = [
-    { id: 'griev1', title: 'Pothole on main road', description: 'A large pothole near the bus stand is causing traffic issues.', location: { lat: 9.9312, lng: 76.2673 }, status: 'submitted', type: 'Roads', createdAt: new Date() },
-    { id: 'griev2', title: 'Garbage not collected', description: 'Waste has not been collected for a week in our area.', location: { lat: 10.8505, lng: 76.2711 }, status: 'in_progress', type: 'Waste', createdAt: new Date() },
-    { id: 'griev3', title: 'Broken streetlight', description: 'The streetlight on our street has been broken for a month.', location: { lat: 8.5241, lng: 76.9366 }, status: 'resolved', type: 'Utilities', createdAt: new Date() },
-    { id: 'griev4', title: 'Leaking water pipe', description: 'Clean water is being wasted due to a leak in the main pipeline.', location: { lat: 9.5916, lng: 76.5222 }, status: 'submitted', type: 'Water', createdAt: new Date() },
-    { id: 'griev5', title: 'Clogged drainage system', description: 'The drainage in our locality is clogged, causing waterlogging.', location: { lat: 11.2588, lng: 75.7804 }, status: 'in_progress', type: 'Sanitation', createdAt: new Date() },
-    { id: 'griev6', title: 'Irregular bus service', description: 'The public bus service is highly irregular and unreliable.', location: { lat: 9.9679, lng: 76.2844 }, status: 'submitted', type: 'Transportation', createdAt: new Date() },
-    { id: 'griev7', title: 'Encroachment on public park', description: 'A portion of the public park has been illegally encroached upon.', location: { lat: 8.4856, lng: 76.9535 }, status: 'in_progress', type: 'Other', createdAt: new Date() },
-    { id: 'griev8', title: 'Damaged playground equipment', description: 'The swings and slides in the children\'s park are broken.', location: { lat: 10.5276, lng: 76.2144 }, status: 'resolved', type: 'Utilities', createdAt: new Date() },
-    { id: 'griev9', title: 'Stray dog menace', description: 'A large number of stray dogs are causing a nuisance and safety hazard.', location: { lat: 11.6643, lng: 75.5537 }, status: 'submitted', type: 'Other', createdAt: new Date() },
-    { id: 'griev10', title: 'Poor road lighting', description: 'The lighting on the highway bypass is inadequate, leading to accidents.', location: { lat: 9.4933, lng: 76.3278 }, status: 'in_progress', type: 'Roads', createdAt: new Date() },
-    { id: 'griev11', title: 'Illegal dumping of waste in river', description: 'Construction debris and other waste is being dumped into the river.', location: { lat: 10.1633, lng: 76.6234 }, status: 'submitted', type: 'Waste', createdAt: new Date() },
-    { id: 'griev12', title: 'Frequent power outages', description: 'We are experiencing multiple power cuts every day in our area.', location: { lat: 8.7642, lng: 76.7145 }, status: 'resolved', type: 'Utilities', createdAt: new Date() },
-    { id: 'griev13', title: 'Contaminated water supply', description: 'The tap water has a foul smell and appears to be contaminated.', location: { lat: 10.7766, lng: 76.0125 }, status: 'in_progress', type: 'Water', createdAt: new Date() },
-    { id: 'griev14', title: 'Lack of public toilets', description: 'There are no public toilets available in the main market area.', location: { lat: 11.2588, lng: 75.7804 }, status: 'submitted', type: 'Sanitation', createdAt: new Date() },
-    { id: 'griev15', title: 'Unfinished road work', description: 'The road work started 6 months ago but has been left unfinished.', location: { lat: 9.9312, lng: 76.2673 }, status: 'in_progress', type: 'Roads', createdAt: new Date() },
+    { id: 'griev1', userId: 'user1', title: 'Pothole on main road', description: 'A large pothole near the bus stand is causing traffic issues.', location: { lat: 9.9312, lng: 76.2673 }, status: 'submitted', type: 'Roads', createdAt: new Date() },
+    { id: 'griev2', userId: 'user2', title: 'Garbage not collected', description: 'Waste has not been collected for a week in our area.', location: { lat: 10.8505, lng: 76.2711 }, status: 'in_progress', type: 'Waste', createdAt: new Date() },
+    { id: 'griev3', userId: 'user3', title: 'Broken streetlight', description: 'The streetlight on our street has been broken for a month.', location: { lat: 8.5241, lng: 76.9366 }, status: 'resolved', type: 'Utilities', createdAt: new Date() },
+    { id: 'griev4', userId: 'user4', title: 'Leaking water pipe', description: 'Clean water is being wasted due to a leak in the main pipeline.', location: { lat: 9.5916, lng: 76.5222 }, status: 'submitted', type: 'Water', createdAt: new Date() },
+    { id: 'griev5', userId: 'user5', title: 'Clogged drainage system', description: 'The drainage in our locality is clogged, causing waterlogging.', location: { lat: 11.2588, lng: 75.7804 }, status: 'in_progress', type: 'Sanitation', createdAt: new Date() },
+    { id: 'griev6', userId: 'user1', title: 'Irregular bus service', description: 'The public bus service is highly irregular and unreliable.', location: { lat: 9.9679, lng: 76.2844 }, status: 'submitted', type: 'Transportation', createdAt: new Date() },
+    { id: 'griev7', userId: 'user2', title: 'Encroachment on public park', description: 'A portion of the public park has been illegally encroached upon.', location: { lat: 8.4856, lng: 76.9535 }, status: 'in_progress', type: 'Other', createdAt: new Date() },
+    { id: 'griev8', userId: 'user6', title: 'Damaged playground equipment', description: 'The swings and slides in the children\'s park are broken.', location: { lat: 10.5276, lng: 76.2144 }, status: 'resolved', type: 'Utilities', createdAt: new Date() },
+    { id: 'griev9', userId: 'user7', title: 'Stray dog menace', description: 'A large number of stray dogs are causing a nuisance and safety hazard.', location: { lat: 11.6643, lng: 75.5537 }, status: 'submitted', type: 'Other', createdAt: new Date() },
+    { id: 'griev10', userId: 'user1', title: 'Poor road lighting', description: 'The lighting on the highway bypass is inadequate, leading to accidents.', location: { lat: 9.4933, lng: 76.3278 }, status: 'in_progress', type: 'Roads', createdAt: new Date() },
+    { id: 'griev11', userId: 'user3', title: 'Illegal dumping of waste in river', description: 'Construction debris and other waste is being dumped into the river.', location: { lat: 10.1633, lng: 76.6234 }, status: 'submitted', type: 'Waste', createdAt: new Date() },
+    { id: 'griev12', userId: 'user4', title: 'Frequent power outages', description: 'We are experiencing multiple power cuts every day in our area.', location: { lat: 8.7642, lng: 76.7145 }, status: 'resolved', type: 'Utilities', createdAt: new Date() },
+    { id: 'griev13', userId: 'user5', title: 'Contaminated water supply', description: 'The tap water has a foul smell and appears to be contaminated.', location: { lat: 10.7766, lng: 76.0125 }, status: 'in_progress', type: 'Water', createdAt: new Date() },
+    { id: 'griev14', userId: 'user6', title: 'Lack of public toilets', description: 'There are no public toilets available in the main market area.', location: { lat: 11.2588, lng: 75.7804 }, status: 'submitted', type: 'Sanitation', createdAt: new Date() },
+    { id: 'griev15', userId: 'user7', title: 'Unfinished road work', description: 'The road work started 6 months ago but has been left unfinished.', location: { lat: 9.9312, lng: 76.2673 }, status: 'in_progress', type: 'Roads', createdAt: new Date() },
   ];
   const grievancesCol = collection(db, 'grievances');
   grievancesData.forEach(grievance => {
     const docRef = doc(grievancesCol, grievance.id);
     batch.set(docRef, grievance);
+  });
+  
+  // Sample Forum Topics Data
+  const topicsData = [
+    { id: 'topic1', title: 'Discussion on Waste Management System Upgrade', content: 'What are your thoughts on the new proposal for waste management? Do you think the new bins and trucks will solve the current issues?', userId: 'admin@example.gov', userName: 'Admin User', createdAt: new Date(new Date().setDate(new Date().getDate() - 5))},
+    { id: 'topic2', title: 'Ideas for Park Renovation in Ward 5', content: 'The budget for renovating the park in Ward 5 is open for voting. What kind of new equipment or facilities would you like to see?', userId: 'user1', userName: 'Suresh Kumar', createdAt: new Date(new Date().setDate(new Date().getDate() - 2))},
+    { id: 'topic3', title: 'Improving Public Transportation', content: 'The bus service has been very unreliable lately. What can be done to improve the situation? Let\'s discuss some potential solutions.', userId: 'user2', userName: 'Anitha Raj', createdAt: new Date(new Date().setDate(new Date().getDate() - 1))},
+  ];
+
+  const topicsCol = collection(db, 'topics');
+  topicsData.forEach(topic => {
+    const docRef = doc(topicsCol, topic.id);
+    batch.set(docRef, topic);
+    
+    // Add replies for each topic
+    if (topic.id === 'topic1') {
+      const reply1Ref = doc(collection(db, 'topics', topic.id, 'replies'));
+      batch.set(reply1Ref, { content: 'This is a much-needed step. The current system is overflowing.', userId: 'user3', userName: 'Biju Menon', createdAt: new Date(new Date().setDate(new Date().getDate() - 4))});
+      const reply2Ref = doc(collection(db, 'topics', topic.id, 'replies'));
+      batch.set(reply2Ref, { content: 'I agree, but we also need better awareness programs for waste segregation.', userId: 'user4', userName: 'Priya Sharma', createdAt: new Date(new Date().setDate(new Date().getDate() - 3))});
+    }
+     if (topic.id === 'topic2') {
+      const reply1Ref = doc(collection(db, 'topics', topic.id, 'replies'));
+      batch.set(reply1Ref, { content: 'We definitely need a separate area for smaller children.', userId: 'user5', userName: 'Rahul Nair', createdAt: new Date(new Date().setDate(new Date().getDate() - 1))});
+    }
+
   });
 
   try {
@@ -156,3 +182,5 @@ export const seedDatabaseFlow = ai.defineFlow(
     return await seedDatabaseLogic();
   }
 );
+
+    
