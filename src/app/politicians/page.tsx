@@ -3,10 +3,11 @@
 import { useEffect, useState } from "react";
 import { db } from "@/lib/firebase";
 import { collection, getDocs } from "firebase/firestore";
-import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { Loader2 } from "lucide-react";
+import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from "@/components/ui/card";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Loader2, Landmark, Package } from "lucide-react";
 import { useTranslation } from "@/hooks/use-translation";
+import { Separator } from "@/components/ui/separator";
 
 interface Politician {
   id: string;
@@ -15,6 +16,7 @@ interface Politician {
   party: string;
   projects: number;
   fundsUtilized: number;
+  avatarUrl?: string;
 }
 
 export default function PoliticiansPage() {
@@ -62,31 +64,39 @@ export default function PoliticiansPage() {
       <p className="text-muted-foreground mb-6">{t("politician_tracker_desc")}</p>
       <Card>
         <CardHeader>
-          <CardTitle>{t("public_officials")}</CardTitle>
+          <CardTitle>{t("politicians")}</CardTitle>
           <CardDescription>{t("public_officials_desc")}</CardDescription>
         </CardHeader>
         <CardContent className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
           {politicians.map((p) => (
-            <Card key={p.id} className="p-4">
-               <div className="flex items-start gap-4">
-                <Avatar className="h-12 w-12 border">
-                  <AvatarFallback>{p.name.charAt(0)}</AvatarFallback>
-                </Avatar>
-                <div className="flex-1">
-                  <CardTitle className="text-lg">{t(p.name)}</CardTitle>
-                  <CardDescription>{t(p.party)} - {t(p.constituency)}</CardDescription>
-                  <div className="mt-4 space-y-2 text-sm">
-                    <div className="flex justify-between">
+            <Card key={p.id} className="overflow-hidden shadow-lg hover:shadow-xl transition-shadow duration-300">
+              <CardContent className="p-0">
+                 <div className="flex flex-col items-center p-6 bg-muted/30">
+                  <Avatar className="h-24 w-24 border-4 border-background shadow-md">
+                    <AvatarImage src={p.avatarUrl} />
+                    <AvatarFallback className="text-3xl">{p.name.charAt(0)}</AvatarFallback>
+                  </Avatar>
+                  <CardTitle className="text-xl mt-4">{t(p.name)}</CardTitle>
+                  <CardDescription className="text-base">{t(p.party)} - {t(p.constituency)}</CardDescription>
+                 </div>
+                 <div className="p-6 space-y-4">
+                  <div className="flex items-center gap-4 text-sm">
+                    <Package className="h-5 w-5 text-primary" />
+                    <div className="flex-1 flex justify-between">
                       <span className="text-muted-foreground">{t("projects")}</span>
-                      <span className="font-medium">{p.projects}</span>
-                    </div>
-                     <div className="flex justify-between">
-                      <span className="text-muted-foreground">{t("funds_utilized")}</span>
-                      <span className="font-medium">{formatCurrency(p.fundsUtilized)}</span>
+                      <span className="font-bold text-lg">{p.projects}</span>
                     </div>
                   </div>
-                </div>
-               </div>
+                  <Separator />
+                  <div className="flex items-center gap-4 text-sm">
+                    <Landmark className="h-5 w-5 text-primary" />
+                    <div className="flex-1 flex justify-between">
+                      <span className="text-muted-foreground">{t("funds_utilized")}</span>
+                      <span className="font-bold text-lg">{formatCurrency(p.fundsUtilized)}</span>
+                    </div>
+                  </div>
+                 </div>
+              </CardContent>
             </Card>
           ))}
            {politicians.length === 0 && (
