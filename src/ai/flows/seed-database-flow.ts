@@ -6,7 +6,7 @@
 
 import { ai } from "@/ai/genkit";
 import { z } from "genkit";
-import { getFirestore, collection, writeBatch } from "firebase/firestore";
+import { getFirestore, collection, writeBatch, doc } from "firebase/firestore";
 import { app } from "@/lib/firebase"; // Using existing firebase app instance
 
 const db = getFirestore(app);
@@ -16,7 +16,7 @@ const SeedDatabaseOutputSchema = z.object({
   message: z.string(),
 });
 
-export async function seedDatabaseFlow(): Promise<z.infer<typeof SeedDatabaseOutputSchema>> {
+export async function seedDatabase(input: void): Promise<z.infer<typeof SeedDatabaseOutputSchema>> {
   const batch = writeBatch(db);
 
   // Sample Funds Data
@@ -25,9 +25,10 @@ export async function seedDatabaseFlow(): Promise<z.infer<typeof SeedDatabaseOut
     { id: 'fund2', department: 'Health Department', allocated: 2000000, utilized: 1500000, project: 'New equipment for General Hospital' },
     { id: 'fund3', department: 'Education Department', allocated: 7500000, utilized: 7000000, project: 'Smart classrooms in 10 schools' },
   ];
+  const fundsCol = collection(db, 'funds');
   fundsData.forEach(fund => {
-    const docRef = collection(db, 'funds');
-    batch.set(doc(docRef, fund.id), fund);
+    const docRef = doc(fundsCol, fund.id);
+    batch.set(docRef, fund);
   });
 
   // Sample Budgets Data
@@ -36,9 +37,10 @@ export async function seedDatabaseFlow(): Promise<z.infer<typeof SeedDatabaseOut
     { id: 'budget2', title: 'Streetlight installation', description: 'Install 50 new LED streetlights in the west zone.', votes: 250, status: 'open' },
     { id: 'budget3', title: 'Community hall construction', description: 'Build a new community hall for public events.', votes: 80, status: 'closed' },
   ];
+  const budgetsCol = collection(db, 'budgets');
   budgetsData.forEach(budget => {
-    const docRef = collection(db, 'budgets');
-    batch.set(doc(docRef, budget.id), budget);
+    const docRef = doc(budgetsCol, budget.id);
+    batch.set(docRef, budget);
   });
 
   // Sample Politicians Data
@@ -47,9 +49,10 @@ export async function seedDatabaseFlow(): Promise<z.infer<typeof SeedDatabaseOut
     { id: 'pol2', name: 'Pinarayi Vijayan', constituency: 'Dharmadam', party: 'CPI(M)', projects: 8, fundsUtilized: 25000000 },
     { id: 'pol3', name: 'V. D. Satheesan', constituency: 'Paravur', party: 'INC', projects: 4, fundsUtilized: 9500000 },
   ];
+  const politiciansCol = collection(db, 'politicians');
   politiciansData.forEach(politician => {
-    const docRef = collection(db, 'politicians');
-    batch.set(doc(docRef, politician.id), politician);
+    const docRef = doc(politiciansCol, politician.id);
+    batch.set(docRef, politician);
   });
   
   // Sample Grievances Data
@@ -72,20 +75,69 @@ export async function seedDatabaseFlow(): Promise<z.infer<typeof SeedDatabaseOut
     };
   } catch (error) {
     console.error("Error seeding database:", error);
-    throw new Error("Failed to write seed data to Firestore.");
+    // It's better to re-throw the original error or a new error with more context
+    if (error instanceof Error) {
+        throw new Error(`Failed to write seed data to Firestore: ${error.message}`);
+    }
+    throw new Error("Failed to write seed data to Firestore due to an unknown error.");
   }
 }
 
-// Helper to get a doc reference with an ID
-function doc(collectionRef: any, id: string) {
-    const { getDoc, doc: fbDoc } = require("firebase/firestore");
-    return fbDoc(collectionRef, id);
-}
 
-const seedDatabaseFlowInternal = ai.defineFlow(
+export const seedDatabaseFlow = ai.defineFlow(
   {
     name: 'seedDatabaseFlow',
     outputSchema: SeedDatabaseOutputSchema,
   },
-  seedDatabaseFlow
+  seedDatabase
 );
+
+// This is to update the action file to call the flow correctly.
+// The existing `seedDatabase` in `actions.ts` calls `seedDatabaseFlow()` which is correct.
+// The original `seedDatabaseFlow` was an async function, not a flow.
+// I've wrapped it in `ai.defineFlow` and named it `seedDatabaseFlow`.
+// The original `seedDatabaseFlow` function is now named `seedDatabase` and is the flow's implementation.
+// This is to avoid a name collision.
+// I'll also update the admin action to call this flow.
+// No, the action already calls `seedDatabaseFlow`. The problem is that the `seedDatabaseFlow` was not a flow. It is now.
+
+// I will also fix the `admin/actions.ts` file to ensure it's calling the flow correctly.
+// Let's check `admin/actions.ts`
+// import { seedDatabaseFlow } from "@/ai/flows/seed-database-flow";
+// export async function seedDatabase() { ... await seedDatabaseFlow(); ... }
+// This is correct. `seedDatabaseFlow` is exported from the flow file.
+
+// The issue is in the old seed-database-flow.ts.
+// - It had a helper function `doc` that was shadowing the imported `doc`
+// - `writeBatch` was used but not `doc` to specify document IDs.
+// - The main `seedDatabaseFlow` was an async function, not a Genkit flow.
+// I have addressed all these issues in the new version.
+// The new version should work as expected.
+// I will just provide the change for `seed-database-flow.ts`.
+// I also noticed that the `admin/actions.ts` calls `seedDatabaseFlow` which is now a flow.
+// The flow takes no arguments. The action calls it with no arguments. This is correct.
+
+// Let's re-examine `src/ai/flows/seed-database-flow.ts`
+// I defined `seedDatabase` as the implementation and then wrapped it in `seedDatabaseFlow`.
+// I am exporting `seedDatabaseFlow`. The admin action imports and uses that. This is good.
+// The `seedDatabase` function has `input: void`. The flow also has no input schema, which is correct.
+// Looks good. I'll make the change.
+// The error was that `doc` was not imported and that the batch was not using it correctly.
+// The `doc(docRef, fund.id)` was wrong. It should be `doc(collectionRef, id)`.
+// `const docRef = collection(db, 'funds'); batch.set(doc(docRef, fund.id), fund);` -> WRONG
+// Correct is:
+// `const fundsCol = collection(db, 'funds'); const docRef = doc(fundsCol, fund.id); batch.set(docRef, fund);`
+// This is what I have implemented.
+
+// The old file also had a `seedDatabaseFlowInternal`. It should be `seedDatabaseFlow`.
+// I've corrected that.
+
+// The old file was also missing an import for `doc` from `firebase/firestore`.
+// My new file has it: `import { getFirestore, collection, writeBatch, doc } from "firebase/firestore";`
+
+// The old `seedDatabaseFlow` function is now the implementation for the flow, and I've renamed it to `seedDatabase` to avoid conflicts.
+// The exported flow is `seedDatabaseFlow`.
+// The admin action calls `seedDatabaseFlow()`. When you call a flow function, you don't need `await` if it's from a server component/action to the flow. But `actions.ts` is just a server action, not a component. So `await` is correct.
+// And `seedDatabase` in actions.ts is an async function. Yes, that is correct.
+
+// The changes look solid.
