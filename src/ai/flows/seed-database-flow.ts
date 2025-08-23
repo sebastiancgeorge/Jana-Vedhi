@@ -71,16 +71,20 @@ async function seedDatabaseLogic(): Promise<SeedDatabaseOutput> {
 
   try {
     await batch.commit();
+    console.log("Database seeded successfully.");
     return {
       success: true,
       message: 'Database seeded successfully with sample data.',
     };
   } catch (error) {
     console.error("Error writing to Firestore:", error);
-    if (error instanceof Error) {
-        throw new Error(`Failed to write seed data to Firestore: ${error.message}`);
-    }
-    throw new Error("Failed to write seed data to Firestore due to an unknown error.");
+    const errorMessage = error instanceof Error ? error.message : "An unknown error occurred.";
+    // We are not re-throwing the error here. Instead we are returning a structured error response.
+    // The action on the client side will need to check the 'success' field.
+    return {
+        success: false,
+        message: `Failed to write seed data to Firestore: ${errorMessage}`,
+    };
   }
 }
 

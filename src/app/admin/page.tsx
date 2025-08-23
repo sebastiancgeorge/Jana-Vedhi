@@ -20,11 +20,12 @@ export default function AdminPage() {
         description: "Database has been seeded with sample data.",
       });
     } catch (error) {
+       const errorMessage = error instanceof Error ? error.message : "An unknown error occurred.";
       console.error("Failed to seed database:", error);
       toast({
         variant: "destructive",
         title: "Error",
-        description: "Failed to seed the database. Check the console for more details.",
+        description: `Failed to seed the database: ${errorMessage}`,
       });
     } finally {
       setIsSeeding(false);
